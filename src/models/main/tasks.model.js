@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Collection from "../../config/collection";
 const taskSchema = mongoose.Schema({
     taskTitle:{
         type: String,
@@ -19,16 +20,22 @@ const taskSchema = mongoose.Schema({
         type: Date,
         required: true,
     },
-    taskAssign:{
+    taskAssign:[{
         type: String,
+        ref: Collection.main.PROJECT_MEMBERS,
         required: true,
-    },
+    }],
     taskTag:{
         type: String,
     },
     taskStatus:{
         type: String,
-    }
+        enum: ["pending", "active", "completed", "cancelled"],
+        default: "pending",
+    },
+},
+{
+    timestamps: true,
 });
-const taskModel = mongoose.model("taskSchema", taskSchema);
+const taskModel = mongoose.model(Collection.main.TASKS, taskSchema);
 export default taskModel;
