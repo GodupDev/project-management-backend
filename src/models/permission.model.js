@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Collection from "../config/collection.js";
 
 const permissionSchema = new mongoose.Schema(
   {
@@ -43,7 +44,7 @@ const permissionSchema = new mongoose.Schema(
         "track_project_progress",
         "manage_project_progress",
         
-        // Quyền quản trị hệ thống rieng leader 
+        // Quyền quản trị hệ thống riêng leader 
         "manage_staff",
         "manage_security",
         "manage_support",
@@ -59,5 +60,6 @@ const permissionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Permission = mongoose.model("Permission", permissionSchema);
+
+const Permission = mongoose.model(Collection.auth.PERMISSION, permissionSchema);
 export default Permission;
