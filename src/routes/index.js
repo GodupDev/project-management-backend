@@ -1,17 +1,8 @@
-import express from "express";
+import permissionRoutes from "./routes/permission.routes.js";
+import roleRoutes from "./routes/role.routes.js";
+import rolePermissionRoutes from "./routes/rolePermission.routes.js";
 
-const app = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Internal Server Error" });
-});
-
-app.get("/", (req, res) => {
-  res.send("Welcome to Project Management System server");
-});
-
-export default app;
+// Use the routes
+app.use("/api/permissions", permissionRoutes);
+app.use("/api/roles", roleRoutes);
+app.use("/api/role-permissions", rolePermissionRoutes);
