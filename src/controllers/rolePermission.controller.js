@@ -1,4 +1,4 @@
-import RolePermission from "../models/RolePermission.model.js";
+import RolePermission from "../models/rolePermission.model.js";
 import Role from "../models/role.model.js";
 import Permission from "../models/permission.model.js";
 import mongoose from "mongoose";
