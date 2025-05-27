@@ -2,6 +2,8 @@ import express from "express";
 import taskModel from "../models/main/tasks.model.js";
 
 export const taskController = {
+    // lấy tất cả task
+    // get http://localhost:8000/tasks
     getAllTask: async(req, res, next) => {
         try{
             const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', q } = req.query;
@@ -11,7 +13,7 @@ export const taskController = {
             let taskQuery = await taskModel.find(query).skip((pageNum - 1) * limitNum).limit(limitNum).sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 }).limit(limitNum);   
             const tasks = await taskModel.find().populate('taskAssign');
             const totalTasks = await taskModel.countDocuments(query);
-            const totalPages = (totalTasks % limitNum) + 1;
+            const totalPages = Math.ceil(totalTasks/limitNum);
             res.status(200).json({
                 success: true,
                 message: "Get all tasks successfully",
@@ -34,6 +36,8 @@ export const taskController = {
             next(err);
         }
     },
+    // get task by id
+    // get http://localhost:8000/tasks/:id
     getTask :async (req, res, next) => {
         try {
             const taskId = req.params.id;
@@ -59,7 +63,8 @@ export const taskController = {
         }
     },
     
-    // post api
+    // tạo task mới
+    // post http://localhost:8000/tasks
     createTask: async (req, res, next) => {
         try {
             const { taskTitle, taskType, taskDescription, taskStartDate, taskEndDate, taskAssign, taskTag } = req.body;
@@ -86,7 +91,8 @@ export const taskController = {
         }
     },
 
-    // update task api
+    // cập nhật task
+    // patch http://localhost:8000/tasks/:id
     updateTask: async (req, res, next) => {
         try {
             const taskId = req.params.id;
@@ -118,10 +124,12 @@ export const taskController = {
             next(err);
         }
     },
-    deleteTask: (req, res, next) =>{
+    // xóa task
+    // delete http://localhost:8000/tasks/:id
+    deleteTask: async (req, res, next) =>{
         try{
             const taskId = req.params.id;
-            const deletedTask = taskModel.findByIdAndDelete(taskId);
+            const deletedTask = await taskModel.findByIdAndDelete(taskId);
             if (!deletedTask) {
                 return res.status(404).json({
                     success: false,

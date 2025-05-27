@@ -6,4 +6,5 @@ TaskRoute.get('/' , taskController.getAllTask)
 TaskRoute.get('/:id', taskController.getTask);
 TaskRoute.post('/', taskController.createTask);
 TaskRoute.patch('/:id', taskController.updateTask)
+TaskRoute.delete('/:id', taskController.deleteTask)
 export default TaskRoute;

@@ -21,8 +21,9 @@ const taskSchema =  mongoose.Schema({
         required: true,
     },
     taskAssign:[{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: Collection.main.PROJECT_MEMBERS,
+        //type: mongoose.Schema.Types.ObjectId,
+        //ref: Collection.main.PROJECT_MEMBERS,
+        type: String,
         required: true,
     }],
     taskTag:{
