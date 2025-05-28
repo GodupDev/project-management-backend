@@ -1,11 +1,11 @@
-import mongoose, { Collection } from "mongoose";
-import Collection from "../../config/collection";
+import mongoose from "mongoose";
+import Collection from "../../config/collection.js";
 const taskAttachmentSchema = new mongoose.Schema({
     taskId: {
         type: mongoose.Schema.Types.ObjectId, 
         ref: Collection.main.TASKS, 
         required: true },
-    uploaderId: { 
+    authorId: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: Collection.main.USERS, 
         required: true},
@@ -35,5 +35,5 @@ const taskAttachmentSchema = new mongoose.Schema({
     },{
         timestamps: true,
     });
-const taskAttachmentModel = mongoose.Model(Collection.main.TASK_ATTATCHMENT, taskAttachmentSchema);
+const taskAttachmentModel = mongoose.model(Collection.main.TASK_ATTACHMENT, taskAttachmentSchema);
 export default taskAttachmentModel;

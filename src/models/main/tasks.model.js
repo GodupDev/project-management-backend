@@ -12,6 +12,12 @@ const taskSchema =  mongoose.Schema({
     taskDescription:{
         type: String,
     },
+    taskAttachment:[{
+        type: String
+        //type: mongoose.Schema.Types.ObjectId,
+        //ref: Collection.main.TASK_ATTACHMENT,
+       
+    }],
     taskStartDate: {
         type: Date,
         required: true,

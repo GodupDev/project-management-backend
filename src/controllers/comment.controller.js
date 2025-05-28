@@ -36,7 +36,7 @@ export const commentController = {
                 }); 
             }
 
-            const { authorId, content, mentions, attachments  } = req.body;
+            const { authorId, content, mentions } = req.body;
             if (!content && !authorId) {
                 return res.status(400).json({
                     success: false,
@@ -47,8 +47,8 @@ export const commentController = {
                 taskId,
                 authorId,
                 content,
-                mentions,
-                attachments
+                mentions
+              
             });
             await newComment.save();
             res.status(201).json({
@@ -136,11 +136,11 @@ export const commentController = {
     updateComment: async (req, res, next) => {
         try {
             const commentId = req.params.id;
-            const { content } = req.body;
+            const { content, mentions } = req.body;
             const updatedComment = await commentModel
                 .findByIdAndUpdate(
                     commentId,
-                    { content },
+                    { content, mentions, isEdited: true },
                     { new: true }
                 )       
                 .populate('authorId');

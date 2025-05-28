@@ -1,9 +1,7 @@
 import express from 'express';
-import { attachmentController } from '../controllers/attachment.controller';
+import { attachmentController } from '../controllers/attachment.controller.js';
 const AttachmentRoute = express.Router();
-AttachmentRoute.get('/:taskId', attachmentController.getAllAttachments);        
-AttachmentRoute.post('/', attachmentController.createAttachment);
-AttachmentRoute.put('/:id', attachmentController.updateAttachment);
+AttachmentRoute.get('/:taskId/', attachmentController.getAllAttachments);        
 AttachmentRoute.delete('/:id', attachmentController.deleteAttachment);  
 export default AttachmentRoute;
 

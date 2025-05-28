@@ -67,7 +67,7 @@ export const taskController = {
     // post http://localhost:8000/tasks
     createTask: async (req, res, next) => {
         try {
-            const { taskTitle, taskType, taskDescription, taskStartDate, taskEndDate, taskAssign, taskTag } = req.body;
+            const { taskTitle, taskType, taskDescription,taskAttachment, taskStartDate, taskEndDate, taskAssign, taskTag } = req.body;
             if (!taskTitle || !taskType || !taskStartDate || !taskEndDate || !taskAssign) {
                 return res.status(400).json({
                     success: false,

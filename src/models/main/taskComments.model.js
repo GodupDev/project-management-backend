@@ -7,10 +7,10 @@ const taskCommentSchema = mongoose.Schema({
         required: true 
     },
     authorId: { 
-        type: String,
+        
         // Cái này sẽ sửa lại sau khi có hết model của members
-        //type: mongoose.Schema.Types.ObjectId, 
-        //ref: Collection.main.USERS, 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: Collection.main.USERS, 
         //require: true 
     },
     content: { 
@@ -23,9 +23,7 @@ const taskCommentSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: Collection.main.PROJECT_MEMBERS, 
     }],
-    attachments: [{ 
-        type: String 
-    }],
+   
     parentCommentId: { 
 
         type: mongoose.Schema.Types.ObjectId, 

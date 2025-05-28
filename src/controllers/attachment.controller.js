@@ -1,16 +1,38 @@
 import express from 'express';
-import {taskAttachmentModel} from '../models/main/attachments.model.js';
-
+import taskAttachmentModel from '../models/main/taskAttachments.model.js';
+import taskModel from '../models/main/tasks.model.js';
 export const attachmentController = {
+    // lấy tất cả các tệp đính kèm của một task
+    // get http://localhost:8000/tasks/:taskId/attachments
     getAllAttachments: async (req, res, next) => {
         try {
             const taskId = req.params.taskId;
-            const attachments = await taskAttachmentModel.find({ taskId }).populate('userId');
+            if(!taskId) {
+                return res.status(400).json({   
+                    success: false,
+                    message: 'Task ID is required'
+                });
+            }
+            const task = await taskModel.findById(taskId);
+            if (!task) {    
+                return res.status(404).json({
+                    success: false,
+                    message: 'Task not found'
+                });
+            }
+            const attachments = await taskAttachmentModel.find({ taskId });
+            if (!attachments || attachments.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No attachments found for this task'
+                });
+            }
             res.status(200).json({
                 success: true,
                 message: 'Get all attachments successfully',
                 data: attachments
-            });         
+            });    
+            
         } catch (err) {
             res.status(500).json({
                 success: false,
@@ -19,38 +41,13 @@ export const attachmentController = {
             });
             next(err);
         }
-    }
-    ,
-    createAttachment: async (req, res, next) => {
-        try {
-            const { taskId, fileName, filePath } = req.body;
-            const newAttachment = new taskAttachmentModel({
-                taskId,
-                userId: req.user._id,
-                fileName,
-                filePath
-            });
-            await newAttachment.save();
-            res.status(201).json({
-                success: true,
-                message: 'Attachment created successfully',
-                data: newAttachment
-            });
-        } catch (err) {
-            res.status(500).json({
-                success: false,
-                message: 'Failed to create attachment',
-                error: err.message
-            });
-            next(err);
-        }
-    }
-    ,
+    },
+    // xử lý việc tạo một tệp đính kèm mới cho một task
+    // post http://localhost:8000/attachments/:taskId
     deleteAttachment: async (req, res, next) => {
         try {
             const attachmentId = req.params.id;
-            const deletedAttachment = await taskAttachment
-Model.findByIdAndDelete(attachmentId);
+            const deletedAttachment = await taskAttachmentModel.findByIdAndDelete(attachmentId);
             if (!deletedAttachment) {
                 return res.status(404).json({
                     success: false,
@@ -72,36 +69,5 @@ Model.findByIdAndDelete(attachmentId);
             next(err);
         }
     }
-    ,
-
-    updateAttachment: async (req, res, next) => {
-        try {
-            const attachmentId = req.params.id;
-            const { fileName, filePath } = req.body;
-            const updatedAttachment = await taskAttachmentModel.findByIdAndUpdate(
-                attachmentId,
-                { fileName, filePath },
-                { new: true, runValidators: true }
-            ).populate('userId');           
-            if (!updatedAttachment) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Attachment not found'
-                });
-            }
-            res.status(200).json({
-                success: true,
-                message: 'Attachment updated successfully',
-                data: updatedAttachment
-            });
-        } catch (err) {
-            res.status(500).json({
-                success: false,
-                message: 'Failed to update attachment',
-                error: err.message
-            });
-            next(err);
-        }
-    }   
-};
-    
+          
+}
