@@ -15,5 +15,5 @@ const roleSchema = new mongoose.Schema({
   },
 });
 
-const Role = mongoose.model(Collection.AUTH_COLLECTIONS.ROLE, roleSchema);
+const Role = mongoose.model(Collection.auth.ROLE, roleSchema);
 export default Role;

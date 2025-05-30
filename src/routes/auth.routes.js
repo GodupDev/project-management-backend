@@ -3,8 +3,11 @@ import {
   register,
   login,
   getCurrentUser,
-} from "../controllers/auth.controller.js";
-import { validateRegister, validateLogin } from "../middlewares/validate.mdw.js";
+} from "../controllers/auth.controllers.js";
+import {
+  validateRegister,
+  validateLogin,
+} from "../middlewares/validate.mdw.js";
 import { protect } from "../middlewares/auth.mdw.js";
 
 const router = express.Router();

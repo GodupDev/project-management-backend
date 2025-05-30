@@ -1,41 +1,45 @@
 import mongoose from "mongoose";
-import Collection from "../../config/collection";
-const taskSchema = mongoose.Schema({
-    taskTitle:{
-        type: String,
-        required: true,
+import Collection from "../../config/collection.js";
+const taskSchema = mongoose.Schema(
+  {
+    taskTitle: {
+      type: String,
+      required: true,
     },
     taskType: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
-    taskDescription:{
-        type: String,
+    taskDescription: {
+      type: String,
     },
     taskStartDate: {
-        type: Date,
-        required: true,
+      type: Date,
+      required: true,
     },
-    taskEndDate:{
-        type: Date,
-        required: true,
+    taskEndDate: {
+      type: Date,
+      required: true,
     },
-    taskAssign:[{
+    taskAssign: [
+      {
         type: String,
         ref: Collection.main.PROJECT_MEMBERS,
         required: true,
-    }],
-    taskTag:{
-        type: String,
+      },
+    ],
+    taskTag: {
+      type: String,
     },
-    taskStatus:{
-        type: String,
-        enum: ["pending", "active", "completed", "cancelled"],
-        default: "pending",
+    taskStatus: {
+      type: String,
+      enum: ["pending", "active", "completed", "cancelled"],
+      default: "pending",
     },
-},
-{
+  },
+  {
     timestamps: true,
-});
+  },
+);
 const taskModel = mongoose.model(Collection.main.TASKS, taskSchema);
 export default taskModel;

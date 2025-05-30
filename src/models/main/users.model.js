@@ -60,5 +60,5 @@ userSchema.methods.generateAuthToken = function () {
   });
 };
 
-const User = mongoose.model(Collection.MAIN_COLLECTIONS.USERS, userSchema);
+const User = mongoose.model(Collection.main.USERS, userSchema);
 export default User;

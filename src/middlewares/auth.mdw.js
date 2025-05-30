@@ -1,40 +1,43 @@
 import jwt from "jsonwebtoken";
-import User from "../models/user.model.js";
-import Role from "../models/role.model.js";
-import RolePermission from "../models/rolePermission.model.js";
-import Permission from "../models/permission.model.js";
+import User from "../models/main/users.model.js";
+import Role from "../models/auth/roles.model.js";
+import RolePermission from "../models/auth/rolePermissions.model.js";
+import Permission from "../models/auth/permissions.model.js";
 
 // Xác thực JWT token và gắn user vào request
 export const protect = async (req, res, next) => {
   try {
     let token;
-    
+
     // Lấy token từ header Authorization
-    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
       token = req.headers.authorization.split(" ")[1];
     }
-    
+
     if (!token) {
       return res.status(401).json({
         success: false,
         message: "Không có quyền truy cập tuyến đường này",
       });
     }
-    
+
     try {
       // Xác thực token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
+
       // Gắn thông tin user vào request
       const user = await User.findById(decoded.id).select("-password");
-      
+
       if (!user) {
         return res.status(404).json({
           success: false,
           message: "Không tìm thấy người dùng",
         });
       }
-      
+
       req.user = user;
       next();
     } catch (error) {
@@ -68,30 +71,30 @@ export const hasPermission = (permissionCode) => {
     try {
       // Lấy vai trò của người dùng
       const userRole = req.user.role._id;
-      
+
       // Tìm quyền theo mã
       const permission = await Permission.findOne({ code: permissionCode });
-      
+
       if (!permission) {
         return res.status(404).json({
           success: false,
           message: "Không tìm thấy quyền",
         });
       }
-      
+
       // Kiểm tra xem vai trò có quyền này không
       const rolePermission = await RolePermission.findOne({
         role: userRole,
         permission: permission._id,
       });
-      
+
       if (!rolePermission) {
         return res.status(403).json({
           success: false,
           message: "Bạn không có quyền thực hiện hành động này",
         });
       }
-      
+
       next();
     } catch (error) {
       next(error);
@@ -116,7 +119,7 @@ export const checkRoleAndPermission = (roles, permissionCode) => {
       }
 
       // 2. Kiểm tra vai trò
-      const userRole = await Role.findById(req.user.role).populate('name');
+      const userRole = await Role.findById(req.user.role).populate("name");
       if (!userRole) {
         return res.status(403).json({
           success: false,
@@ -164,22 +167,21 @@ export const checkRoleAndPermission = (roles, permissionCode) => {
   };
 };
 
-
 // example middleware kết hợp kiểm tra vai trò và quyền
 // import { protect, checkRoleAndPermission } from "../middlewares/auth.mdw.js";
 
 // Route yêu cầu vai trò Leader và quyền tạo dự án
 // router.post(
-//   "/projects", 
+//   "/projects",
 //   protect,
-//   checkRoleAndPermission(["Leader"], "create_project"), 
+//   checkRoleAndPermission(["Leader"], "create_project"),
 //   createProject
 // );
 
 // Route cho phép cả Leader và Staff xem dự án
 // router.get(
-//   "/projects/:id", 
-//   protect, 
-//   checkRoleAndPermission(["Leader", "Staff"], "view_project"), 
+//   "/projects/:id",
+//   protect,
+//   checkRoleAndPermission(["Leader", "Staff"], "view_project"),
 //   getProjectById
 // );

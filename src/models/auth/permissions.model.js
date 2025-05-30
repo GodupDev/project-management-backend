@@ -23,8 +23,5 @@ const permissionSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const Permission = mongoose.model(
-  Collection.AUTH_COLLECTIONS.PERMISSION,
-  permissionSchema,
-);
+const Permission = mongoose.model(Collection.auth.PERMISSION, permissionSchema);
 export default Permission;

@@ -1,5 +1,4 @@
 import User from "../models/main/users.model.js";
-import Role from "../models/auth/roles.model.js";
 import { validationResult } from "express-validator";
 
 // Đăng ký người dùng mới
@@ -73,7 +72,7 @@ export const login = async (req, res) => {
     }
 
     // Tạo token
-    const token = await user.generateAuthToken();
+    const token = user.generateAuthToken();
 
     res.status(200).json({
       success: true,
@@ -96,7 +95,7 @@ export const login = async (req, res) => {
 // Lấy thông tin người dùng hiện tại
 export const getCurrentUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate("role");
+    const user = await User.findById(req.user._id);
 
     res.status(200).json({
       success: true,
@@ -104,7 +103,6 @@ export const getCurrentUser = async (req, res) => {
         _id: user._id,
         email: user.email,
         username: user.username,
-        role: user.role.name,
       },
     });
   } catch (error) {
