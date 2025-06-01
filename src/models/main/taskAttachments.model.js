@@ -9,26 +9,9 @@ const taskAttachmentSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: Collection.main.USERS, 
         required: true},
-    fileName: { 
-        type: String, 
-        required: true },
-    fileType: { 
-        type: String },
-    fileSize: { 
-        type: Number },
-    fileUrl: { 
-        type: String, 
-        required: true },
     uploadedAt: { 
         type: Date, 
         default: Date.now },
-    commentId: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: Collection.main.TASK_COMMENTS, 
-        default: null },
-    isDeleted: { 
-        type: Boolean, 
-        default: false },
     storageProvider: { 
         type: String, 
         default: 'local' }

@@ -1,25 +1,25 @@
 import mongoose from "mongoose";
 import Collection from "../../config/collection.js";
 
-const projectMemberSchema =  mongoose.Schema(
+const projectMemberSchema = new Schema(
   {
-    project_id: {
+    projectId: {
       type: mongoose.Schema.Types.ObjectId, // FK
-      ref: Collection.main.PROJECTS,
+      ref: Collection.MAIN_COLLECTIONS.PROJECTS,
       required: true,
       index: true,
     },
-    user_id: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId, // FK
-      ref: Collection.main.USERS,
+      ref: Collection.MAIN_COLLECTIONS.USERS,
       required: true,
       index: true,
     },
-    role_id: {
-      //   type: mongoose.Schema.Types.ObjectId,
-      //   ref: Collection.auth.ROLE,
-      type: Number,
+    roleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: Collection.AUTH_COLLECTIONS.ROLE,
       required: true,
+      index: true,
     },
   },
   {
@@ -27,10 +27,13 @@ const projectMemberSchema =  mongoose.Schema(
   },
 );
 
-projectMemberSchema.index({ project_id: 1, user_id: 1 }, { unique: true });
+projectMemberSchema.index(
+  { projectId: 1, userId: 1, roleId: 1 },
+  { unique: true },
+);
 
 const projectMemberModel = mongoose.model(
-  Collection.main.PROJECT_MEMBERS,
+  Collection.MAIN_COLLECTIONS.PROJECT_MEMBERS,
   projectMemberSchema,
 );
 export default projectMemberModel;

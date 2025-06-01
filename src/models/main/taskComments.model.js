@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import Collection from "../../config/collection.js";
+import mongoose, { Collection } from "mongoose";
+import Collection from "../../config/collection";
 const taskCommentSchema = mongoose.Schema({
     taskId: { 
         type: mongoose.Schema.Types.ObjectId, 
@@ -7,37 +7,29 @@ const taskCommentSchema = mongoose.Schema({
         required: true 
     },
     authorId: { 
-        
-        // Cái này sẽ sửa lại sau khi có hết model của members
         type: mongoose.Schema.Types.ObjectId, 
         ref: Collection.main.USERS, 
-        //require: true 
+        required: true 
     },
     content: { 
         type: String,
         required: true 
     },
     mentions: [{ 
-        
-        // Cái này sẽ sửa lại sau khi có hết model của members
         type: mongoose.Schema.Types.ObjectId, 
         ref: Collection.main.PROJECT_MEMBERS, 
     }],
-   
     parentCommentId: { 
-
         type: mongoose.Schema.Types.ObjectId, 
         ref: Collection.main.TASK_COMMENTS,
     },
     isEdited: { 
         type: Boolean, 
         default: false 
+    }
     },
-    isDeleted: { 
-        type: Boolean, 
-        default: false }
-    },{
+    {
         timestamps: true,
     })
-const taskCommentModel = mongoose.model(Collection.main.TASK_COMMENTS, taskCommentSchema);
+const taskCommentModel = mongoose.Schema(Collection.main.TASK_COMMENTS, taskCommentSchema);
 export default taskCommentModel;
