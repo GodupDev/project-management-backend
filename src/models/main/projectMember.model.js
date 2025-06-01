@@ -3,23 +3,23 @@ import Collection from "../../config/collection.js";
 
 const projectMemberSchema = new Schema(
   {
-    projectId: {
+    project_id: {
       type: mongoose.Schema.Types.ObjectId, // FK
-      ref: Collection.MAIN_COLLECTIONS.PROJECTS,
+      ref: Collection.main.PROJECTS,
       required: true,
       index: true,
     },
-    userId: {
+    user_id: {
       type: mongoose.Schema.Types.ObjectId, // FK
-      ref: Collection.MAIN_COLLECTIONS.USERS,
+      ref: Collection.main.USERS,
       required: true,
       index: true,
     },
-    roleId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: Collection.AUTH_COLLECTIONS.ROLE, 
+    role_id: {
+      //   type: mongoose.Schema.Types.ObjectId,
+      //   ref: Collection.auth.ROLE,
+      type: Number,
       required: true,
-      index: true,
     },
   },
   {
@@ -27,13 +27,11 @@ const projectMemberSchema = new Schema(
   },
 );
 
-projectMemberSchema.index(
-  { projectId: 1, userId: 1, roleId: 1 },
-  { unique: true },
-);
+projectMemberSchema.index({ project_id: 1, user_id: 1 }, { unique: true });
 
 const projectMemberModel = mongoose.model(
-  Collection.MAIN_COLLECTIONS.PROJECT_MEMBERS,
+  Collection.main.PROJECT_MEMBERS,
   projectMemberSchema,
 );
 export default projectMemberModel;
+
