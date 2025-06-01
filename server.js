@@ -1,8 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
-import mainRoute from "./src/routes/index.js";
+import mainRoute from "./src/routes/index.routes.js";
 import connectDB from "./src/config/db.js";
-import app from "./src/index.js";
+import app from "./src/index.src.js";
 
 
 dotenv.config();

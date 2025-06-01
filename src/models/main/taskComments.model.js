@@ -1,5 +1,5 @@
-import mongoose, { Collection } from "mongoose";
-import Collection from "../../config/collection";
+import mongoose from "mongoose";
+import Collection from "../../config/collection.js";
 const taskCommentSchema = mongoose.Schema({
     taskId: { 
         type: mongoose.Schema.Types.ObjectId, 
@@ -31,5 +31,5 @@ const taskCommentSchema = mongoose.Schema({
     {
         timestamps: true,
     })
-const taskCommentModel = mongoose.Schema(Collection.main.TASK_COMMENTS, taskCommentSchema);
+const taskCommentModel = mongoose.model(Collection.main.TASK_COMMENTS, taskCommentSchema);
 export default taskCommentModel;

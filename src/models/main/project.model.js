@@ -44,7 +44,7 @@ const projectSchema = new Schema(
 
 // Custom validation: endDate phải lớn hơn hoặc bằng startDate
 projectSchema.pre("save", function (next) {
-  if (this.dateRange.endDate >= this.dateRange.startDate) {
+  if (this.dateRange.endDate < this.dateRange.startDate) {
     return next(
       new Error("End date must be greater than or equal to start date"),
     );

@@ -14,16 +14,20 @@ const taskSchema = mongoose.Schema(
     taskDescription: {
       type: String,
     },
-    dateRange: {
-      startDate: {
-        type: Date,
-        required: [true, "Start date is required"],
-      },
-      endDate: {
-        type: Date,
-        required: [true, "End date is required"],
-      },
+    taskAttchment: {
+      type: String,
+      default: "",
     },
+    
+    taskStartDate: {
+      type: Date,
+      required: [true, "Start date is required"],
+    },
+    taskEndDate: {
+      type: Date,
+      required: [true, "End date is required"],
+    },
+    
     taskAssign: [
       {
         type: String,
@@ -44,7 +48,7 @@ const taskSchema = mongoose.Schema(
 );
 
 taskSchema.pre("save", function (next) {
-  if (this.dateRange.endDate >= this.dateRange.startDate) {
+  if (this.taskEndDate < this.taskStartDate) {
     return next(
       new Error("End date must be greater than or equal to start date"),
     );

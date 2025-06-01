@@ -6,7 +6,7 @@
 // PATCH /profile – Cập nhật hồ sơ cá nhân
 // PATCH /profile/password – Đổi mật khẩu
 
-import UsersModel from "../models/users.js";
+import UsersModel from "../models/users.model.js";
 
 dotenv.config();
 
