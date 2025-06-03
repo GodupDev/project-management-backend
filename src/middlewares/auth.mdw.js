@@ -17,7 +17,7 @@ export const protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Không có quyền truy cập tuyến đường này",
+        message: "Không có quyền truy cập",
       });
     }
     
@@ -40,7 +40,7 @@ export const protect = async (req, res, next) => {
     } catch (error) {
       return res.status(401).json({
         success: false,
-        message: "Không có quyền truy cập tuyến đường này",
+        message: "Không có quyền truy cập",
         error: error.message,
       });
     }
@@ -55,7 +55,7 @@ export const restrictTo = (...roles) => {
     if (!roles.includes(req.user.role.name)) {
       return res.status(403).json({
         success: false,
-        message: `Vai trò ${req.user.role.name} không có quyền truy cập tuyến đường này`,
+        message: `Vai trò ${req.user.role.name} không có quyền truy cập`,
       });
     }
     next();
