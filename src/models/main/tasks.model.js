@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Collection from "../../config/collection.js";
+import Collection from "../../config/collection.config.js";
 const taskSchema = mongoose.Schema(
   {
     taskTitle: {

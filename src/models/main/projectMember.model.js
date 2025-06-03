@@ -1,23 +1,25 @@
 import mongoose from "mongoose";
-import Collection from "../../config/collection.js";
+import Collection from "../../config/collection.config.js";
+
+const { Schema } = mongoose;
 
 const projectMemberSchema = new Schema(
   {
     projectId: {
       type: mongoose.Schema.Types.ObjectId, // FK
-      ref: Collection.MAIN_COLLECTIONS.PROJECTS,
+      ref: Collection.main.PROJECTS,
       required: true,
       index: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId, // FK
-      ref: Collection.MAIN_COLLECTIONS.USERS,
+      ref: Collection.main.USERS,
       required: true,
       index: true,
     },
     roleId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: Collection.AUTH_COLLECTIONS.ROLE,
+      ref: Collection.auth.ROLE,
       required: true,
       index: true,
     },
@@ -33,7 +35,7 @@ projectMemberSchema.index(
 );
 
 const projectMemberModel = mongoose.model(
-  Collection.MAIN_COLLECTIONS.PROJECT_MEMBERS,
+  Collection.main.PROJECT_MEMBERS,
   projectMemberSchema,
 );
 export default projectMemberModel;

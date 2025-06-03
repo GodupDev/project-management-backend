@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Collection from "../../config/collection.js";
+import Collection from "../../config/collection.config.js";
 
 const userProfileSchema = new mongoose.Schema(
   {
@@ -28,8 +28,7 @@ const userProfileSchema = new mongoose.Schema(
           // Regex cơ bản, có thể thay theo yêu cầu từng quốc gia
           return !v || /^[0-9\-\+\s]{9,15}$/.test(v);
         },
-        message: (props) =>
-          `${props.value} is not a valid phone number!`,
+        message: (props) => `${props.value} is not a valid phone number!`,
       },
     },
     avatarUrl: {
@@ -61,13 +60,13 @@ const userProfileSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Tạo model từ schema
 const UserProfileModel = mongoose.model(
   Collection.MAIN_COLLECTIONS.USER_PROFILES,
-  userProfileSchema
+  userProfileSchema,
 );
 
 export default UserProfileModel;

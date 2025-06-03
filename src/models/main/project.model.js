@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import Collection from "../../config/collection.js";
-import Enum from "../../config/enums.js";
+import Collection from "../../config/collection.config.js";
+import Enum from "../../config/enums.config.js";
 
 const { Schema } = mongoose;
 
@@ -52,8 +52,5 @@ projectSchema.pre("save", function (next) {
   next();
 });
 
-const ProjectModel = mongoose.model(
-  Collection.MAIN_COLLECTIONS.PROJECTS,
-  projectSchema,
-);
+const ProjectModel = mongoose.model(Collection.main.PROJECTS, projectSchema);
 export default ProjectModel;

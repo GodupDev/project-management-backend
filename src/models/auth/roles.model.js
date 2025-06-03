@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import Collection from "../../config/collection.js";
-import Enum from "../../config/enums.js";
+import Collection from "../../config/collection.config.js";
+import Enum from "../../config/enums.config.js";
 
 const roleSchema = new mongoose.Schema({
   name: {
