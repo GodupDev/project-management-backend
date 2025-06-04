@@ -11,7 +11,7 @@ import { protect } from "../middlewares/auth.mdw.js";
 const router = express.Router();
 
 // Tất cả routes có yêu cầu xác thực người dùng
-// router.use(protect);
+router.use(protect);
 
 // Lấy tất cả phân quyền
 router.get("/", getAllRolePermissions);
