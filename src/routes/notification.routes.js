@@ -3,17 +3,14 @@ import notificationController from "../controllers/notification.controller.js";
 
 const router = express.Router();
 
-// Get real-time notifications for a project
+// Get notifications for a project
 router.get(
   "/project/:projectId",
   notificationController.getProjectNotifications,
 );
 
-// Get notifications list for a project (non-realtime)
-router.get(
-  "/project/:projectId/list",
-  notificationController.getProjectNotificationsList,
-);
+// Create a new notification
+router.post("/", notificationController.createNotification);
 
 // Mark a notification as read
 router.patch("/:notificationId/read", notificationController.markAsRead);

@@ -17,145 +17,6 @@ class NotificationService {
   constructor() {
     this.subscribers = new Map();
   }
-
-  // Utility function to create project-related notifications
-  async createProjectNotification({
-    projectId,
-    userId,
-    type,
-    title,
-    message,
-    data = {},
-  }) {
-    try {
-      const notificationData = {
-        projectId,
-        userId,
-        type,
-        title,
-        message,
-        data,
-        isRead: false,
-        createdAt: serverTimestamp(),
-      };
-
-      const docRef = await addDoc(
-        collection(db, "notifications"),
-        notificationData,
-      );
-      return docRef.id;
-    } catch (error) {
-      console.error("Failed to create project notification:", error);
-      throw new Error(`Failed to create notification: ${error.message}`);
-    }
-  }
-
-  // Create notification for new task
-  async createTaskNotification(projectId, taskData, creatorId) {
-    return this.createProjectNotification({
-      projectId,
-      userId: taskData.assignedTo, // Notify the assigned user
-      type: "TASK_CREATED",
-      title: "New Task Assigned",
-      message: `You have been assigned to task: ${taskData.title}`,
-      data: {
-        taskId: taskData.id,
-        taskTitle: taskData.title,
-        creatorId: creatorId,
-      },
-    });
-  }
-
-  // Create notification for task status change
-  async createTaskStatusNotification(projectId, taskData, updaterId) {
-    return this.createProjectNotification({
-      projectId,
-      userId: taskData.assignedTo,
-      type: "TASK_STATUS_CHANGED",
-      title: "Task Status Updated",
-      message: `Task "${taskData.title}" status changed to ${taskData.status}`,
-      data: {
-        taskId: taskData.id,
-        taskTitle: taskData.title,
-        newStatus: taskData.status,
-        updaterId: updaterId,
-      },
-    });
-  }
-
-  // Create notification for new comment
-  async createCommentNotification(projectId, commentData, taskData) {
-    return this.createProjectNotification({
-      projectId,
-      userId: taskData.assignedTo,
-      type: "NEW_COMMENT",
-      title: "New Comment on Task",
-      message: `New comment on task: ${taskData.title}`,
-      data: {
-        taskId: taskData.id,
-        taskTitle: taskData.title,
-        commentId: commentData.id,
-        commenterId: commentData.userId,
-      },
-    });
-  }
-
-  // Create notification for project member added
-  async createMemberAddedNotification(
-    projectId,
-    projectName,
-    newMemberId,
-    addedById,
-  ) {
-    return this.createProjectNotification({
-      projectId,
-      userId: newMemberId,
-      type: "MEMBER_ADDED",
-      title: "Added to Project",
-      message: `You have been added to project: ${projectName}`,
-      data: {
-        projectName,
-        addedById,
-      },
-    });
-  }
-
-  // Create notification for project update
-  async createProjectUpdateNotification(
-    projectId,
-    projectName,
-    updateType,
-    updaterId,
-  ) {
-    return this.createProjectNotification({
-      projectId,
-      type: "PROJECT_UPDATED",
-      title: "Project Updated",
-      message: `Project "${projectName}" has been updated: ${updateType}`,
-      data: {
-        projectName,
-        updateType,
-        updaterId,
-      },
-    });
-  }
-
-  // Create notification for deadline approaching
-  async createDeadlineNotification(projectId, taskData) {
-    return this.createProjectNotification({
-      projectId,
-      userId: taskData.assignedTo,
-      type: "DEADLINE_APPROACHING",
-      title: "Deadline Approaching",
-      message: `Task "${taskData.title}" deadline is approaching`,
-      data: {
-        taskId: taskData.id,
-        taskTitle: taskData.title,
-        deadline: taskData.deadline,
-      },
-    });
-  }
-
   // Original methods remain unchanged
   async createNotification(data) {
     try {
@@ -172,35 +33,6 @@ class NotificationService {
       return docRef.id;
     } catch (error) {
       throw new Error(`Failed to create notification: ${error.message}`);
-    }
-  }
-
-  // Subscribe to notifications for a specific project
-  subscribeToProjectNotifications(projectId, callback) {
-    try {
-      const q = query(
-        collection(db, "notifications"),
-        where("projectId", "==", projectId),
-        orderBy("createdAt", "desc"),
-      );
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const notifications = [];
-        snapshot.forEach((doc) => {
-          notifications.push({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate() || new Date(),
-          });
-        });
-        callback(notifications);
-      });
-
-      // Store the unsubscribe function
-      this.subscribers.set(projectId, unsubscribe);
-      return unsubscribe;
-    } catch (error) {
-      throw new Error(`Failed to subscribe to notifications: ${error.message}`);
     }
   }
 
@@ -224,6 +56,68 @@ class NotificationService {
     }
   }
 
+  async createNewNotification(data) {
+    try {
+      const notificationsRef = collection(db, "notifications");
+
+      if (!data.userId) {
+        throw new Error("User ID is required for notifications");
+      }
+
+      if (!data.projectId) {
+        throw new Error("Project ID is required for notifications");
+      }
+
+      const message = this.generateMessage(
+        data.actionType,
+        data.taskName,
+        data.userId,
+        data.additionalInfo,
+      );
+
+      const notificationData = {
+        userId: data.userId,
+        projectId: data.projectId,
+        taskId: data.taskId || null,
+        type: data.actionType,
+        message,
+        isRead: false,
+        createdAt: serverTimestamp(),
+      };
+
+      console.log("Creating notification with data:", notificationData);
+
+      const docRef = await addDoc(notificationsRef, notificationData);
+      return docRef.id;
+    } catch (error) {
+      console.error("Error creating notification:", error);
+      throw new Error(`Failed to create notification: ${error.message}`);
+    }
+  }
+
+  generateMessage(actionType, taskName, userId, additionalInfo) {
+    switch (actionType) {
+      case "TASK_CREATED":
+        return `New task "${taskName}" has been created`;
+      case "TASK_UPDATED":
+        return `Task "${taskName}" has been updated`;
+      case "TASK_DELETED":
+        return `Task "${taskName}" has been deleted`;
+      case "TASK_ASSIGNED":
+        return `You have been assigned to task "${taskName}"`;
+      case "TASK_COMPLETED":
+        return `Task "${taskName}" has been completed`;
+      case "COMMENT_ADDED":
+        return `New comment on task "${taskName}"`;
+      case "PROJECT_UPDATED":
+        return `Project has been updated`;
+      case "MEMBER_ADDED":
+        return `New member has been added to the project`;
+      default:
+        return `Notification: ${actionType}`;
+    }
+  }
+
   // Get notifications for a user in a specific project
   async getUserProjectNotifications(userId, projectId) {
     try {
@@ -244,14 +138,6 @@ class NotificationService {
       throw new Error(
         `Failed to get user project notifications: ${error.message}`,
       );
-    }
-  }
-
-  unsubscribeFromNotifications(projectId) {
-    const unsubscribe = this.subscribers.get(projectId);
-    if (unsubscribe) {
-      unsubscribe();
-      this.subscribers.delete(projectId);
     }
   }
 

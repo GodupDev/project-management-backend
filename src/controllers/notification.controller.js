@@ -1,44 +1,8 @@
 import notificationService from "../services/firebase/notification.service.js";
 
 class NotificationController {
-  // Get all notifications for a project
+  // Get notifications for a specific project
   async getProjectNotifications(req, res) {
-    try {
-      const { projectId } = req.params;
-      const { userId } = req.query;
-
-      // Set up real-time subscription
-      const unsubscribe = notificationService.subscribeToProjectNotifications(
-        projectId,
-        (notifications) => {
-          // Filter notifications for specific user if userId is provided
-          const filteredNotifications = userId
-            ? notifications.filter((n) => n.userId === userId)
-            : notifications;
-
-          // Send notifications through WebSocket or SSE
-          if (req.app.get("io")) {
-            req.app
-              .get("io")
-              .to(projectId)
-              .emit("notifications", filteredNotifications);
-          }
-        },
-      );
-
-      // Store unsubscribe function for cleanup
-      req.on("close", () => {
-        unsubscribe();
-      });
-
-      res.status(200).json({ message: "Listening for project notifications" });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
-
-  // Get notifications for a specific project (non-realtime)
-  async getProjectNotificationsList(req, res) {
     try {
       const { projectId } = req.params;
       const { userId } = req.query;
@@ -64,15 +28,28 @@ class NotificationController {
   // Create a new notification
   async createNotification(req, res) {
     try {
-      const { projectId, userId, title, message, type, data } = req.body;
-
-      const notificationId = await notificationService.createNotification({
-        projectId,
+      const {
+        actionType,
+        taskName,
         userId,
-        title,
-        message,
-        type,
-        data,
+        taskId,
+        projectId,
+        additionalInfo,
+      } = req.body;
+
+      if (!actionType || !userId || !projectId) {
+        return res.status(400).json({
+          error: "Action type, userId, and projectId are required",
+        });
+      }
+
+      const notificationId = await notificationService.createNewNotification({
+        actionType,
+        taskName,
+        userId,
+        taskId,
+        projectId,
+        additionalInfo,
       });
 
       res.status(201).json({
@@ -80,6 +57,7 @@ class NotificationController {
         notificationId,
       });
     } catch (error) {
+      console.error("Error creating notification:", error);
       res.status(500).json({ error: error.message });
     }
   }

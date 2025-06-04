@@ -60,6 +60,21 @@ const PERMISSION_CODE = Object.freeze({
   ],
 });
 
-const Enum = { PROJECT_STATUS, TASK_STATUS, ROLE_NAME, PERMISSION_CODE };
+const NOTIFICATION_TYPES = {
+  TASK_CREATED: "task_created",
+  TASK_STATUS_CHANGED: "task_status_changed",
+  PROJECT_UPDATED: "project_updated",
+  MEMBER_ADDED: "member_added",
+  DEADLINE_APPROACHING: "deadline_approaching",
+  NEW_COMMENT: "new_comment",
+};
+
+const Enum = {
+  PROJECT_STATUS,
+  TASK_STATUS,
+  ROLE_NAME,
+  PERMISSION_CODE,
+  NOTIFICATION_TYPES,
+};
 
 export default Enum;
