@@ -1,3 +1,194 @@
+# Hướng dẫn sử dụng middleware + call api 
+1. API Xác thực (Auth Routes)
+Đăng ký người dùng
+Method: POST
+URL: http://localhost:8000/api/users/register
+Headers: Content-Type: application/json
+Body:
+{
+  "username": "testuser",
+  "email": "testuser@example.com",
+  "password": "123456"
+}
+
+Đăng nhập người dùng
+Method: POST
+URL: http://localhost:8000/api/users/register
+Headers: Content-Type: application/json
+Body:
+{
+  "username": "testuser",
+  "email": "testuser@example.com",
+  "password": "123456"
+}
+
+Lấy thông tin người dùng hiện tại
+Method: GET
+URL: http://localhost:8000/api/users/me
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token_từ_đăng_nhập]
+
+2. API Vai trò (Role Routes)
+Lấy danh sách vai trò
+Method: GET
+URL: http://localhost:8000/api/roles
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+
+Tạo vai trò mới
+Method: POST
+URL: http://localhost:8000/api/roles
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+Body:
+{
+  "name": "leader",
+  "description": "Người quản lý dự án"
+}
+
+Cập nhật vai trò
+Method: PUT
+URL: http://localhost:8000/api/roles/[role_id]
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+Body:
+{
+  "name": "leader",
+  "description": "Người quản lý dự án cấp cao"
+}
+
+
+Xóa vai trò
+Method: PUT
+Method: DELETE
+URL: http://localhost:8000/api/roles/[role_id]
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+
+
+3. API Quyền (Permission Routes)
+Lấy danh sách quyền
+Method: GET
+URL: http://localhost:8000/api/permissions
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+
+Tạo quyền mới
+Method: POST
+URL: http://localhost:8000/api/permissions
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+Body:
+{
+  "code": "create_project",
+  "description": "Quyền tạo dự án mới"
+}
+
+Cập nhật quyền
+Method: PUT
+URL: http://localhost:8000/api/permissions/[permission_id]
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+Body:
+{
+  "code": "create_project",
+  "description": "Tạo dự án mới trong hệ thống"
+}
+
+Xoá quyền
+Method: DELETE
+URL: http://localhost:8000/api/permissions/[permission_id]
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+
+
+4. API Phân quyền (RolePermission Routes)
+Lấy tất cả phân quyền
+Method: GET
+URL: http://localhost:8000/api/role-permissions
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+
+Gán quyền cho vai trò
+Method: POST
+URL: http://localhost:8000/api/role-permissions
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+Body:
+{
+  "roleId": "[role_id]",
+  "permissionId": "[permission_id]"
+}
+
+Lấy quyền theo vai trò
+Method: GET
+URL: http://localhost:8000/api/role-permissions/roles/[role_id]/permissions
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+
+Gán nhiều quyền cho vai trò
+Method: POST
+URL: http://localhost:8000/api/role-permissions/roles/[role_id]/permissions
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+Body:
+{
+  "permissionIds": ["permission_id1", "permission_id2", "permission_id3"]
+}
+
+xoá phân quyền 
+Method: DELETE
+URL: http://localhost:8000/api/role-permissions/[role_permission_id]
+Headers: 
+  - Content-Type: application/json
+  - Authorization: Bearer [token] (nếu middleware protect được kích hoạt)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Hướng dẫn sử dụng hệ thống phân quyền
 
 ## 1. Tổng quan hệ thống phân quyền

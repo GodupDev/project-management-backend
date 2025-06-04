@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import Collection from "../config/collection.js";
+import Collection from "../../config/collection.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minlength: [3, "Tên người dùng phải có ít nhất 3 ký tự"],
     },
-    role: {
+      role: {
       type: mongoose.Schema.Types.ObjectId,
       ref: Collection.auth.ROLE,
       required: true,
@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Mã hóa mật khẩu trước khi lưu
@@ -47,7 +47,7 @@ userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
   }
-  
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
@@ -60,7 +60,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 // Tạo JWT token
 userSchema.methods.generateAuthToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };

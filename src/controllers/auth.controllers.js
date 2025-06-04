@@ -35,7 +35,7 @@ export const register = async (req, res) => {
       email,
       password,
       username,
-      role: role._id,
+      role: role._id, // Thêm dòng này để gán role
     });
 
     // Tạo token
@@ -64,7 +64,6 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
 
     // Tìm user và populate role
     const user = await User.findOne({ email })
@@ -122,7 +121,6 @@ export const login = async (req, res) => {
 export const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate("role");
-
 
     res.status(200).json({
       success: true,

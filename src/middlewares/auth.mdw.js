@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
-import User from "../models/user.model.js";
-import Role from "../models/role.model.js";
-import RolePermission from "../models/rolePermission.model.js";
-import Permission from "../models/permission.model.js";
+import User from "../models/main/users.model.js";
+import Role from "../models/auth/roles.model.js";
+import RolePermission from "../models/auth/rolePermissions.model.js";
+import Permission from "../models/auth/permissions.model.js";
 
 // Xác thực JWT token và gắn user vào request
 export const protect = async (req, res, next) => {
@@ -17,16 +17,16 @@ export const protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Không có quyền truy cập tuyến đường này",
+        message: "Không có quyền truy cập",
       });
     }
     
     try {
       // Xác thực token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
       
       // Gắn thông tin user vào request
-      const user = await User.findById(decoded.id).select("-password");
+      const user = await User.findById(decoded.id).select("-password").populate('role');
       
       if (!user) {
         return res.status(404).json({
@@ -40,7 +40,7 @@ export const protect = async (req, res, next) => {
     } catch (error) {
       return res.status(401).json({
         success: false,
-        message: "Không có quyền truy cập tuyến đường này",
+        message: "Không có quyền truy cập",
         error: error.message,
       });
     }
@@ -52,12 +52,22 @@ export const protect = async (req, res, next) => {
 // Giới hạn truy cập dựa trên vai trò
 export const restrictTo = (...roles) => {
   return async (req, res, next) => {
-    if (!roles.includes(req.user.role.name)) {
+    // Thêm kiểm tra role tồn tại
+    if (!req.user.role) {
       return res.status(403).json({
         success: false,
-        message: `Vai trò ${req.user.role.name} không có quyền truy cập tuyến đường này`,
+        message: "Không tìm thấy vai trò người dùng",
       });
     }
+
+    // Thêm kiểm tra role.name tồn tại
+    if (!req.user.role.name || !roles.includes(req.user.role.name)) {
+      return res.status(403).json({
+        success: false,
+        message: `Vai trò ${req.user.role.name || 'không xác định'} không có quyền truy cập`,
+      });
+    }
+    
     next();
   };
 };
@@ -67,7 +77,7 @@ export const hasPermission = (permissionCode) => {
   return async (req, res, next) => {
     try {
       // Lấy vai trò của người dùng
-      const userRole = req.user.role._id;
+      const profileMember = req.user.role._id;
       
       // Tìm quyền theo mã
       const permission = await Permission.findOne({ code: permissionCode });
@@ -81,7 +91,7 @@ export const hasPermission = (permissionCode) => {
       
       // Kiểm tra xem vai trò có quyền này không
       const rolePermission = await RolePermission.findOne({
-        role: userRole,
+        role: profileMember,
         permission: permission._id,
       });
       
@@ -116,21 +126,21 @@ export const checkRoleAndPermission = (roles, permissionCode) => {
       }
 
       // 2. Kiểm tra vai trò
-      const userRole = await Role.findById(req.user.role).populate('name');
-      if (!userRole) {
+      const profileMember = await Role.findById(req.user.role).populate('name');
+      if (!profileMember) {
         return res.status(403).json({
           success: false,
           message: "Không tìm thấy thông tin vai trò của bạn",
         });
       }
 
-      if (!roles.includes(userRole.name)) {
+      if (!roles.includes(profileMember.name)) {
         return res.status(403).json({
           success: false,
-          message: `Vai trò ${userRole.name} không có quyền truy cập tài nguyên này`,
+          message: `Vai trò ${profileMember.name} không có quyền truy cập tài nguyên này`,
         });
       }
-
+      
       // 3. Kiểm tra quyền
       const permission = await Permission.findOne({ code: permissionCode });
       if (!permission) {

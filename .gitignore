@@ -2,3 +2,6 @@ node_modules/
 .env
 /dist
 /build
+src/index.js
+
+src/routes/index.js
