@@ -26,7 +26,7 @@ export const protect = async (req, res, next) => {
 
     try {
       // Xác thực token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
       // Gắn thông tin user vào request
       const user = await User.findById(decoded.id).select("-password");

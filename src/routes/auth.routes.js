@@ -1,9 +1,5 @@
 import express from "express";
-import {
-  register,
-  login,
-  getCurrentUser,
-} from "../controllers/auth.controllers.js";
+import AuthController from "../controllers/auth.controllers.js";
 import {
   validateRegister,
   validateLogin,
@@ -12,8 +8,9 @@ import { protect } from "../middlewares/auth.mdw.js";
 
 const router = express.Router();
 
-router.post("/register", validateRegister, register);
-router.post("/login", validateLogin, login);
-router.get("/me", protect, getCurrentUser);
+router.post("/register", validateRegister, AuthController.register);
+router.post("/login", validateLogin, AuthController.login);
+router.get("/me", protect, AuthController.getCurrentUser);
+router.post("/signout", protect, AuthController.signout);
 
 export default router;
