@@ -60,14 +60,23 @@ const PERMISSION_CODE = Object.freeze({
   ],
 });
 
-const NOTIFICATION_TYPES = {
+const NOTIFICATION_TYPES = Object.freeze({
+  // Task notifications
   TASK_CREATED: "task_created",
-  TASK_STATUS_CHANGED: "task_status_changed",
+  TASK_UPDATED: "task_updated",
+  TASK_DELETED: "task_deleted",
+  TASK_ASSIGNED: "task_assigned",
+  TASK_CHANGE_STATUS: "task_change_status",
+  TASK_COMMENT_ADDED: "task_comment_added",
+
+  // Project notifications
+  PROJECT_CREATED: "project_created",
   PROJECT_UPDATED: "project_updated",
-  MEMBER_ADDED: "member_added",
-  DEADLINE_APPROACHING: "deadline_approaching",
-  NEW_COMMENT: "new_comment",
-};
+  PROJECT_DELETED: "project_deleted",
+  PROJECT_MEMBER_ADDED: "project_member_added",
+  PROJECT_MEMBER_REMOVED: "project_member_removed",
+  PROJECT_MEMBER_UPDATED: "project_member_updated",
+});
 
 const Enum = {
   PROJECT_STATUS,

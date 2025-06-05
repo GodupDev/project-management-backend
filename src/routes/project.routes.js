@@ -7,54 +7,29 @@ const router = express.Router();
 // Project routes
 router.post("/", protect, ProjectController.createProject);
 
-router.get(
-  "/",
-  protect,
-  checkRoleAndPermission(["Leader", "Staff"], "view_project"),
-  ProjectController.getAllProjects,
-);
+router.get("/", protect, ProjectController.getAllProjects);
 
-router.get(
-  "/:id",
-  protect,
-  checkRoleAndPermission(["Leader", "Staff"], "view_project"),
-  ProjectController.getProjectById,
-);
+router.get("/:id", protect, ProjectController.getProjectById);
 
-router.put(
-  "/:id",
-  protect,
-  checkRoleAndPermission(["Leader"], "update_project"),
-  ProjectController.updateProject,
-);
+router.put("/:id", protect, ProjectController.updateProject);
 
-router.delete(
-  "/:id",
-  protect,
-  checkRoleAndPermission(["Leader"], "delete_project"),
-  ProjectController.deleteProject,
-);
+router.delete("/:id", protect, ProjectController.deleteProject);
 
 // Project member routes
-router.post(
-  "/:id/members",
-  protect,
-  checkRoleAndPermission(["Leader"], "manage_project_members"),
-  ProjectController.addProjectMember,
-);
+router.post("/:id/members", protect, ProjectController.addProjectMembers);
 
-router.get(
-  "/:id/members",
-  protect,
-  checkRoleAndPermission(["Leader", "Staff"], "view_project_members"),
-  ProjectController.getProjectMembers,
-);
+router.get("/:id/members", protect, ProjectController.getProjectMembers);
 
 router.delete(
   "/:id/members/:memberId",
   protect,
-  checkRoleAndPermission(["Leader"], "manage_project_members"),
   ProjectController.removeProjectMember,
+);
+
+router.put(
+  "/:id/members/:memberId",
+  protect,
+  ProjectController.updateProjectMember,
 );
 
 export default router;

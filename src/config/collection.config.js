@@ -9,12 +9,10 @@ const Collection = {
     TASK_ATTACHMENT: "task_attachment",
   },
   supporting: {
-    TASK_STATUS_HISTORY: "task_status_history",
-    TIME_LOG: "time_log",
+    SETTING: "setting",
     NOTIFICATION: "notification",
-    LABEL: "label",
-    TAG: "tag",
-    AUDIT_LOG: "audit_log",
+    WORK_LOG: "work_log",
+    PERFORMANCE: "performance",
   },
   auth: {
     ROLE: "role",

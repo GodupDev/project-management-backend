@@ -19,16 +19,16 @@ const projectSchema = new Schema(
     dateRange: {
       startDate: {
         type: Date,
-        required: [true, "Start date is required"],
+        default: () => new Date(), // Correct way to set today's date as default
       },
       endDate: {
         type: Date,
-        required: [true, "End date is required"],
       },
     },
     status: {
       type: String,
       enum: Enum.PROJECT_STATUS,
+      default: Enum.PROJECT_STATUS.ACTIVE,
     },
     createdBy: {
       type: Schema.Types.ObjectId,
@@ -42,15 +42,12 @@ const projectSchema = new Schema(
   },
 );
 
-// Custom validation: endDate phải lớn hơn hoặc bằng startDate
-projectSchema.pre("save", function (next) {
-  if (this.dateRange.endDate < this.dateRange.startDate) {
-    return next(
-      new Error("End date must be greater than or equal to start date"),
-    );
-  }
-  next();
-});
+projectSchema.statics.findByIdAndUpdateProject = function (id, updateData) {
+  return this.findByIdAndUpdate(id, updateData, {
+    new: true,
+    runValidators: true,
+  });
+};
 
 const ProjectModel = mongoose.model(Collection.main.PROJECTS, projectSchema);
 export default ProjectModel;

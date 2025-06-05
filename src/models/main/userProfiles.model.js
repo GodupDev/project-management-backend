@@ -5,7 +5,7 @@ const userProfileSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: Collection.MAIN_COLLECTIONS.USERS,
+      ref: Collection.main.USERS,
       required: true,
       unique: true,
       index: true, // tăng tốc truy vấn
@@ -65,7 +65,7 @@ const userProfileSchema = new mongoose.Schema(
 
 // Tạo model từ schema
 const UserProfileModel = mongoose.model(
-  Collection.MAIN_COLLECTIONS.USER_PROFILES,
+  Collection.main.USERS_PROFILE,
   userProfileSchema,
 );
 

@@ -20,8 +20,8 @@ const projectMemberSchema = new Schema(
     roleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: Collection.auth.ROLE,
-      required: true,
       index: true,
+      default: "6833df5c354c96367f2bf5a4", //Staff
     },
   },
   {

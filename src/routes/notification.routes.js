@@ -1,24 +1,14 @@
 import express from "express";
-import notificationController from "../controllers/notification.controller.js";
+import NotificationController from "../controllers/notification.controllers.js";
+import { protect, checkRoleAndPermission } from "../middlewares/auth.mdw.js";
 
 const router = express.Router();
 
-// Get notifications for a project
-router.get(
-  "/project/:projectId",
-  notificationController.getProjectNotifications,
-);
+// Project routes
+router.post("/", protect, NotificationController.addNotification);
+router.get("/", protect, NotificationController.getNotifications);
+router.delete("/:id", protect, NotificationController.deleteNotification);
+router.put("/:id/read", protect, NotificationController.markNotificationAsRead);
 
-// Create a new notification
-router.post("/", notificationController.createNotification);
-
-// Mark a notification as read
-router.patch("/:notificationId/read", notificationController.markAsRead);
-
-// Mark all notifications as read for a project
-router.patch(
-  "/project/:projectId/read-all",
-  notificationController.markAllAsRead,
-);
-
+// Export the router
 export default router;

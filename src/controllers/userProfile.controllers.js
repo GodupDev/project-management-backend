@@ -4,14 +4,13 @@
 
 
 // PATCH /profile – Cập nhật hồ sơ cá nhân
-// PATCH /profile/password – Đổi mật khẩu
 
 import UsersModel from "../models/users.js";
 
 dotenv.config();
 
 const postController = {
-  createNewPost: async (req, res) => {
+  createNewPost: async (req, res) => {sửa 
     try {
       const { apiKey } = req.query;
       const { userId, content } = req.body;
