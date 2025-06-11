@@ -29,10 +29,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minlength: [3, "Tên người dùng phải có ít nhất 3 ký tự"],
     },
-    // firebaseId: {
-    //   type: String,
-    //   unique: true,
-    // },
     isActive: {
       type: Boolean,
       default: false,

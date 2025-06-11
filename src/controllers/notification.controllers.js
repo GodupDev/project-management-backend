@@ -129,7 +129,6 @@ const NotificationController = {
         notification.isRead = true;
         await notification.save();
 
-        // Gửi thông báo đến Firebase Cloud Messaging nếu cần (phần này bạn giữ nguyên)
         const message = {
           notification: {
             title: "Notification Read",
