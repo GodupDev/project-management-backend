@@ -1,0 +1,94 @@
+// Database structure for the project management system
+// This file defines the relationships between different entities
+
+// User table definition
+Table users {
+  id integer [primary key, increment]
+  username varchar [not null, unique]
+  email varchar [not null, unique]
+  password varchar [not null]
+  role varchar [not null, default: 'user']
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+// Post table definition
+Table posts {
+  id integer [primary key, increment]
+  title varchar [not null]
+  body text [note: 'Content of the post']
+  user_id integer [not null, ref: > users.id]
+  status varchar [not null, default: 'draft']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+// Follow relationship table
+Table follows {
+  following_user_id integer [not null, ref: > users.id]
+  followed_user_id integer [not null, ref: > users.id]
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (following_user_id, followed_user_id) [unique]
+  }
+}
+
+// Project table definition
+Table projects {
+  id integer [primary key, increment]
+  name varchar [not null]
+  description text
+  status varchar [not null, default: 'active']
+  created_by integer [not null, ref: > users.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+// Project member table definition
+Table project_members {
+  project_id integer [not null, ref: > projects.id]
+  user_id integer [not null, ref: > users.id]
+  role varchar [not null, default: 'member']
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (project_id, user_id) [unique]
+  }
+}
+
+// Task table definition
+Table tasks {
+  id integer [primary key, increment]
+  title varchar [not null]
+  description text
+  project_id integer [not null, ref: > projects.id]
+  assigned_to integer [ref: > users.id]
+  status varchar [not null, default: 'todo']
+  created_by integer [not null, ref: > users.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+// User profile table definition
+Table user_profiles {
+  user_id integer [primary key, ref: > users.id]
+  full_name varchar
+  avatar_url varchar
+  bio text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+// References
+Ref: posts.user_id > users.id // many-to-one
+Ref: follows.following_user_id > users.id // many-to-one
+Ref: follows.followed_user_id > users.id // many-to-one
+Ref: projects.created_by > users.id // many-to-one
+Ref: project_members.project_id > projects.id // many-to-one
+Ref: project_members.user_id > users.id // many-to-one
+Ref: tasks.project_id > projects.id // many-to-one
+Ref: tasks.assigned_to > users.id // many-to-one
+Ref: tasks.created_by > users.id // many-to-one
+Ref: user_profiles.user_id > users.id // one-to-one 

@@ -1,0 +1,190 @@
+# Hướng dẫn sử dụng hệ thống phân quyền
+
+## 1. Tổng quan hệ thống phân quyền
+
+Hệ thống phân quyền của chúng ta dựa trên ba thành phần chính:
+- **Vai trò (Role)**: Phân loại người dùng (Leader, Staff)
+- **Quyền (Permission)**: Các hành động cụ thể người dùng được phép thực hiện
+- **Phân quyền (RolePermission)**: Liên kết giữa vai trò và quyền
+
+### Workflow phân quyền:
+
+1. Người dùng đăng nhập và nhận JWT token
+2. Mỗi request đến API được bảo vệ bởi middleware `protect`
+3. Middleware kiểm tra token và lấy thông tin người dùng, bao gồm vai trò
+4. Middleware tiếp theo kiểm tra quyền hoặc vai trò tương ứng
+5. API được thực hiện nếu người dùng có đủ quyền, ngược lại trả về lỗi 403 Forbidden
+
+## 2. Các middleware phân quyền
+
+### a) protect
+Xác thực JWT token và gắn thông tin người dùng vào request
+```javascript
+router.get("/projects", protect, getAllProjects);
+```
+
+### b) hasPermission
+Kiểm tra người dùng có quyền cụ thể không
+```javascript
+router.post("/tasks", protect, hasPermission("create_task"), createTask);
+```
+
+### c) restrictTo
+Kiểm tra người dùng có vai trò cụ thể không
+```javascript
+router.delete("/projects/:id", protect, restrictTo("Leader"), deleteProject);
+```
+
+### d) checkRoleAndPermission
+Kết hợp kiểm tra cả vai trò và quyền
+```javascript
+router.put("/settings", protect, checkRoleAndPermission(["Leader"], "manage_settings"), updateSettings);
+```
+
+## 3. Danh sách mã quyền (Permission codes)
+
+### Project permissions
+- `create_project`: Tạo dự án mới
+- `view_project`: Xem dự án
+- `update_project`: Cập nhật dự án
+- `delete_project`: Xóa dự án
+
+### Task permissions
+- `create_task`: Tạo công việc
+- `view_task`: Xem công việc
+- `update_task`: Cập nhật công việc
+- `delete_task`: Xóa công việc
+
+### Comment permissions
+- `create_comment`: Thêm bình luận
+- `update_comment`: Sửa bình luận
+- `delete_comment`: Xóa bình luận
+
+### Settings permissions
+- `manage_settings`: Quản lý cài đặt
+- `view_settings`: Xem cài đặt
+
+### TimeLog permissions
+- `manage_timelogs`: Quản lý nhật ký thời gian
+- `view_timelogs`: Xem nhật ký thời gian
+
+### Performance permissions
+- `view_performance`: Xem hiệu suất
+
+## 4. Hướng dẫn triển khai cho từng module
+
+### Module Quản lý dự án
+```javascript
+import { protect, hasPermission } from "../middlewares/auth.mdw.js";
+
+// Các routes cho dự án
+router.post("/projects", protect, hasPermission("create_project"), createProject);
+router.get("/projects", protect, hasPermission("view_project"), getAllProjects);
+router.get("/projects/:id", protect, hasPermission("view_project"), getProjectById);
+router.put("/projects/:id", protect, hasPermission("update_project"), updateProject);
+router.delete("/projects/:id", protect, hasPermission("delete_project"), deleteProject);
+```
+
+### Module Quản lý nhiệm vụ
+```javascript
+import { protect, hasPermission } from "../middlewares/auth.mdw.js";
+
+// Các routes cho nhiệm vụ
+router.post("/tasks", protect, hasPermission("create_task"), createTask);
+router.get("/tasks", protect, hasPermission("view_task"), getAllTasks);
+router.get("/tasks/:id", protect, hasPermission("view_task"), getTaskById);
+router.put("/tasks/:id", protect, hasPermission("update_task"), updateTask);
+router.delete("/tasks/:id", protect, hasPermission("delete_task"), deleteTask);
+```
+
+### Module Quản lý cài đặt
+```javascript
+import { protect, hasPermission, restrictTo } from "../middlewares/auth.mdw.js";
+
+// Chỉ Leader mới được cập nhật cài đặt
+router.put("/settings", protect, restrictTo("Leader"), updateSettings);
+// Bất kỳ ai đã đăng nhập đều có thể xem cài đặt
+router.get("/settings", protect, getSettings);
+```
+
+## 5. Quy trình thêm quyền mới
+
+Nếu cần thêm quyền mới cho hệ thống:
+
+1. **Thêm mã quyền mới** vào script seedAuth.js
+   ```javascript
+   // Thêm quyền mới
+   { code: "export_report", description: "Xuất báo cáo" },
+   ```
+
+2. **Cập nhật phân quyền** cho vai trò
+   ```javascript
+   const rolePermissionsMap = {
+     "Leader": [
+       // Các quyền hiện tại
+       "export_report" // Thêm quyền mới
+     ],
+     "Staff": [...] 
+   };
+   ```
+
+3. **Chạy lại script khởi tạo**
+   ```bash
+   npm run seed-auth
+   ```
+
+4. **Sử dụng trong routes**
+   ```javascript
+   router.get("/reports/export", protect, hasPermission("export_report"), exportReport);
+   ```
+
+## 6. Testing phân quyền
+
+1. **Tạo user với vai trò Leader**
+   ```json
+   {
+     "email": "leader@example.com",
+     "password": "password123",
+     "username": "project_leader",
+     "roleName": "Leader"
+   }
+   ```
+
+2. **Tạo user với vai trò Staff**
+   ```json
+   {
+     "email": "staff@example.com",
+     "password": "password123",
+     "username": "project_staff",
+     "roleName": "Staff"
+   }
+   ```
+
+3. **Kiểm tra quyền**
+   - Leader có thể gọi tất cả API
+   - Staff chỉ có thể gọi API được phép theo phân quyền
+
+## 7. Xử lý lỗi phân quyền
+
+- Lỗi 401 (Unauthorized): Người dùng chưa đăng nhập hoặc token không hợp lệ
+- Lỗi 403 (Forbidden): Người dùng không có quyền thực hiện hành động
+- Lỗi 404 (Not Found): Quyền không tồn tại
+
+## Bảng phân quyền mặc định
+
+| Permission | Leader | Staff |
+|------------|:------:|:-----:|
+| create_project | ✅ | ❌ |
+| view_project | ✅ | ✅ |
+| update_project | ✅ | ✅ |
+| delete_project | ✅ | ❌ |
+| create_task | ✅ | ✅ |
+| view_task | ✅ | ✅ |
+| update_task | ✅ | ✅ |
+| delete_task | ✅ | ❌ |
+| manage_settings | ✅ | ❌ |
+| view_performance | ✅ | ✅ |
+
+## Liên hệ hỗ trợ
+
+Nếu có bất kỳ vấn đề gì về phân quyền, hãy liên hệ Bùi Quốc Bình (người phụ trách phân quyền).
