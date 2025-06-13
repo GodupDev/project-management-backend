@@ -58,6 +58,44 @@ const ProjectController = {
     }
   },
 
+  getAllProjectsUnfiltered: async (req, res) => {
+  try {
+    const {
+      sort = "desc",
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const parsedPage = Math.max(parseInt(page), 1);
+    const parsedLimit = Math.max(parseInt(limit), 1);
+    const sortOrder = sort === "asc" ? 1 : -1;
+
+    const [projects, total] = await Promise.all([
+      ProjectModel.find({})
+        .sort({ createdAt: sortOrder })
+        .skip((parsedPage - 1) * parsedLimit)
+        .limit(parsedLimit)
+        .lean(),
+      ProjectModel.countDocuments({}),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "All projects (unfiltered) retrieved successfully",
+      total,
+      page: parsedPage,
+      limit: parsedLimit,
+      data: projects,
+    });
+  } catch (error) {
+    console.error("Error in getAllProjectsUnfiltered:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get all projects",
+      error: error.message,
+    });
+  }
+},
   // Lấy tất cả project
   // + Từ tất cả project mà user đang làm việc
   // + Thêm các filler (status, Data range), sort
@@ -164,6 +202,32 @@ const ProjectController = {
     }
   },
 
+  getProjectMembers: async (req, res) => {
+    const { projectId } = req.params;
+
+  try {
+    const members = await ProjectMemberModel.find({ projectId })
+      .populate({
+        path: "userId",
+        select: "username email userProfileId", // chỉ lấy cần thiết
+      })
+      .populate({
+        path: "roleId",
+        select: "name", // nếu muốn lấy tên role
+      });
+
+    res.status(200).json({
+      success: true,
+      data: members,
+    });
+  } catch (err) {
+    console.error("Error fetching project members:", err);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi lấy danh sách thành viên dự án",
+    });
+  }
+},
   // Lấy project theo ID, kèm thành viên
   getProjectById: async (req, res) => {
     try {

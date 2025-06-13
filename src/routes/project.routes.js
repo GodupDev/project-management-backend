@@ -7,6 +7,10 @@ const router = express.Router();
 // Project routes
 router.post("/", protect, ProjectController.createProject);
 
+router.get("/all-unfiltered", ProjectController.getAllProjectsUnfiltered);
+
+router.get("/:projectId/members",  ProjectController.getProjectMembers);
+
 router.get("/", protect, ProjectController.getAllProjects);
 
 router.get("/:id", protect, ProjectController.getProjectById);
