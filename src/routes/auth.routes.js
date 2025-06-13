@@ -13,5 +13,6 @@ router.post("/login", validateLogin, AuthController.login);
 router.get("/me", protect, AuthController.getCurrentUser);
 router.post("/signout", protect, AuthController.signout);
 router.put("/change-password", protect, AuthController.changePassword);
+router.get("/:email", AuthController.getUserByEmail);
 
 export default router;

@@ -34,6 +34,9 @@ const AuthController = {
         fullName: username, // Sử dụng tên người dùng làm tên đầy đủ mặc định
       });
 
+      user.userProfileId = userProfile._id;
+      await user.save();
+
       return res.status(201).json({
         success: true,
         data: {
@@ -63,27 +66,19 @@ const AuthController = {
       const { email, password } = req.body;
 
       // Kiểm tra xem người dùng tồn tại không
-      const user = await User.findOne({ email }).select("+password");
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: "Thông tin đăng nhập không hợp lệ",
-        });
-      }
-
-      // Kiểm tra tài khoản có đang hoạt động không
-      user.isActive = true;
-
-      await user.save();
 
       // Kiểm tra mật khẩu có khớp không
+      const user = await User.findOne({ email }).select("+password");
       const isMatch = await user.matchPassword(password);
-      if (!isMatch) {
+      if (!isMatch || !user) {
         return res.status(401).json({
           success: false,
           message: "Thông tin đăng nhập không hợp lệ",
         });
       }
+
+      user.isActive = true;
+      await user.save();
 
       // Tạo token
       const token = user.generateAuthToken();
@@ -227,7 +222,7 @@ const AuthController = {
 
   getUserByEmail: async (req, res) => {
     try {
-      const { email } = req.query;
+      const { email } = req.params;
 
       if (!email) {
         return res.status(400).json({

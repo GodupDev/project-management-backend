@@ -15,21 +15,16 @@ router.put("/:id", protect, ProjectController.updateProject);
 
 router.delete("/:id", protect, ProjectController.deleteProject);
 
-// Project member routes
-router.post("/:id/members", protect, ProjectController.addProjectMembers);
-
-router.get("/:id/members", protect, ProjectController.getProjectMembers);
+router.put(
+  "/:id/members/:memberId",
+  protect,
+  ProjectController.updateProjectMember,
+);
 
 router.delete(
   "/:id/members/:memberId",
   protect,
   ProjectController.removeProjectMember,
-);
-
-router.put(
-  "/:id/members/:memberId",
-  protect,
-  ProjectController.updateProjectMember,
 );
 
 export default router;

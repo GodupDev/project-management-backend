@@ -47,7 +47,7 @@ const userProfileController = {
         location,
         contactNumber,
         avatarUrl,
-        about,
+        bio,
         socialLinks,
       } = req.body;
 
@@ -63,7 +63,7 @@ const userProfileController = {
             bestPosition,
             contactNumber,
             avatarUrl,
-            about,
+            bio,
             socialLinks,
             location,
           },
@@ -77,7 +77,7 @@ const userProfileController = {
           position,
           contactNumber,
           avatarUrl,
-          about,
+          bio,
           socialLinks,
         });
       }
