@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minlength: [3, "Tên người dùng phải có ít nhất 3 ký tự"],
     },
+    userProfileId: {
+      type: mongoose.Schema.Types.ObjectId, // FK
+      ref: Collection.main.USERS_PROFILE,
+      index: true,
+    },
     isActive: {
       type: Boolean,
       default: false,

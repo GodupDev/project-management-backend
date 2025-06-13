@@ -1,7 +1,9 @@
 import Enum from "../config/enums.config.js";
+import Collection from "../config/collection.config.js";
 
 import ProjectModel from "../models/main/project.model.js";
 import ProjectMemberModel from "../models/main/projectMember.model.js";
+import UserModel from "../models/main/users.model.js";
 
 import createNotification from "../services/notification.service.js";
 
@@ -39,6 +41,7 @@ const ProjectController = {
       await ProjectMemberModel.create({
         projectId: project._id,
         userId,
+        roleId: "684af97fba312846eace5d55", // Staff role
       });
 
       return res.status(201).json({
@@ -71,53 +74,85 @@ const ProjectController = {
         search,
       } = req.query;
 
-      // Validate & parse pagination and sort
       const parsedPage = Math.max(parseInt(page), 1);
       const parsedLimit = Math.max(parseInt(limit), 1);
       const sortOrder = sort === "asc" ? 1 : -1;
 
-      // Step 1: Find project IDs where the user is a member
+      // Validate dates
+      if (from && to) {
+        const fromDate = new Date(from);
+        const toDate = new Date(to);
+        if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid date format. Please use ISO format (YYYY-MM-DD)",
+          });
+        }
+        if (fromDate > toDate) {
+          return res.status(400).json({
+            success: false,
+            message: "From date cannot be after to date",
+          });
+        }
+      }
+
+      // Get projects the user is a member of
       const memberships = await ProjectMemberModel.find({ userId }).select(
         "projectId",
       );
-      
-      const projectIds = memberships.map((member) => member.projectId);
+      const memberProjectIds = memberships.map((m) => m.projectId);
 
-      // Step 2: Build dynamic query
-      const query = { _id: { $in: projectIds } };
-
-      if (status) {
-        query.status = status;
-      }
-
+      // Build query
+      const query = { _id: { $in: memberProjectIds } };
+      if (status) query.status = status;
       if (from || to) {
         query["dateRange.startDate"] = {};
         if (from) query["dateRange.startDate"].$gte = new Date(from);
         if (to) query["dateRange.startDate"].$lte = new Date(to);
       }
-
-      // Add search keyword if provided
       if (search) {
         const regex = new RegExp(search, "i");
-        query.$or = [{ name: regex }, { description: regex }];
+        query.$or = [{ projectName: regex }, { description: regex }];
       }
 
-      // Step 3: Execute query with pagination and sorting
+      // Get paginated projects and total count
       const [projects, total] = await Promise.all([
         ProjectModel.find(query)
           .sort({ createdAt: sortOrder })
           .skip((parsedPage - 1) * parsedLimit)
-          .limit(parsedLimit)
-          .populate("createdBy", "username email"),
+          .limit(parsedLimit),
         ProjectModel.countDocuments(query),
       ]);
+
+      const projectIds = projects.map((project) => project._id);
+
+      // Count members per project
+      const membersGrouped = await ProjectMemberModel.aggregate([
+        { $match: { projectId: { $in: projectIds } } },
+        {
+          $group: {
+            _id: "$projectId",
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const memberCountMap = {};
+      membersGrouped.forEach((item) => {
+        memberCountMap[item._id.toString()] = item.count;
+      });
+
+      const result = projects.map((project) => ({
+        ...project.toObject(),
+        memberCount: memberCountMap[project._id.toString()] || 0,
+      }));
 
       return res.status(200).json({
         success: true,
         total,
         page: parsedPage,
         limit: parsedLimit,
-        data: projects,
+        data: result,
       });
     } catch (error) {
       console.error("Error in getAllProjects:", error);
@@ -128,13 +163,23 @@ const ProjectController = {
       });
     }
   },
+
   // Lấy project theo ID, kèm thành viên
   getProjectById: async (req, res) => {
     try {
-      const project = await ProjectModel.findById(req.params.id).populate(
-        "createdBy",
-        "username email",
-      );
+      const projectId = req.params.id;
+
+      // Get project with creator details
+      const project = await ProjectModel.findById(projectId)
+        .populate({
+          path: "createdBy",
+          select: "username userProfileId",
+          populate: {
+            path: "userProfileId",
+            select: "avatar",
+          },
+        })
+        .lean();
 
       if (!project) {
         return res.status(404).json({
@@ -143,26 +188,44 @@ const ProjectController = {
         });
       }
 
-      const rawMembers = await ProjectMemberModel.find({
-        projectId: project._id,
-      })
-        .populate("userId", "_id") // Chỉ lấy _id
-        .populate("roleId", "name"); // Chỉ lấy name
+      // Get project members with user details
+      const members = await ProjectMemberModel.find({ projectId })
+        .populate({
+          path: "userId",
+          select: "username userProfileId",
+          populate: {
+            path: "userProfileId",
+            select: "avatarUrl",
+          },
+        })
+        .populate("roleId", "name")
+        .lean();
 
-      // Làm gọn dữ liệu member
-      const members = rawMembers.map((member) => ({
-        userId: member.userId?._id,
+      // Format response data
+      const formattedMembers = members.map((member) => ({
+        userId: member.userId._id,
+        username: member.userId.username,
+        avatarUrl: member.userId.userProfileId?.avatarUrl,
         role: member.roleId?.name,
       }));
 
       return res.status(200).json({
         success: true,
         data: {
-          ...project.toObject(),
-          members,
+          ...project,
+          createdBy: {
+            _id: project.createdBy._id,
+            username: project.createdBy.username,
+            avatar: project.createdBy.userProfileId?.avatar,
+          },
+          members: formattedMembers,
+          statistics: {
+            memberCount: members.length,
+          },
         },
       });
     } catch (error) {
+      console.error("Error in getProjectById:", error);
       return res.status(500).json({
         success: false,
         message: "Failed to get project",
@@ -175,6 +238,7 @@ const ProjectController = {
   updateProject: async (req, res) => {
     try {
       const project = await ProjectModel.findById(req.params.id);
+
       if (!project) {
         return res.status(404).json({
           success: false,
@@ -187,6 +251,21 @@ const ProjectController = {
         req.body,
       );
 
+      var log = "";
+
+      for (const userId of req.body.memberIds) {
+        const member = await UserModel.findById(userId);
+
+        if (member) {
+          await ProjectMemberModel.create({
+            projectId: project._id,
+            userId,
+          });
+        } else {
+          log += `User with ID ${userId} not found. `;
+        }
+      }
+
       const reqNotification = {
         authorId: req.user._id,
         projectId: project._id,
@@ -197,6 +276,7 @@ const ProjectController = {
       await createNotification(reqNotification);
 
       return res.status(200).json({
+        log,
         success: true,
         message: "Project updated successfully",
         data: updatedProject,
@@ -243,118 +323,6 @@ const ProjectController = {
       return res.status(500).json({
         success: false,
         message: "Failed to delete project",
-        error: error.message,
-      });
-    }
-  },
-
-  // Thêm member vào project (chỉ creator hoặc leader mới thêm được)
-
-  addProjectMembers: async (req, res) => {
-    try {
-      const members = req.body.members; // [{ userId }]
-      const projectId = req.params.id;
-
-      if (!Array.isArray(members) || members.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: "User list is required",
-        });
-      }
-
-      const project = await ProjectModel.findById(projectId);
-      if (!project) {
-        return res.status(404).json({
-          success: false,
-          message: "Project not found",
-        });
-      }
-
-      const usernames = [];
-      const addedMembers = [];
-
-      for (const { userId } of members) {
-        const exists = await ProjectMemberModel.findOne({ projectId, userId });
-        if (!exists) {
-          const member = await ProjectMemberModel.create({ projectId, userId });
-
-          const populatedMember = await member.populate({
-            path: "userId",
-            select: "userName", // chỉ lấy userName
-          });
-
-          const username = populatedMember.userId.toJSON().userName;
-          usernames.push(username);
-
-          const cleanMember = member.toObject();
-          delete cleanMember.__v;
-          delete cleanMember.createdAt;
-          delete cleanMember.updatedAt;
-          delete cleanMember.projectId;
-
-          addedMembers.push(cleanMember);
-        }
-      }
-
-      if (addedMembers.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: "No new members added",
-        });
-      }
-
-      const content = usernames.join(", ");
-
-      // Gửi thông báo cho creator
-      const verbToBe = addedMembers.length > 1 ? "are" : "is";
-      const reqNotification = {
-        authorId: req.user._id,
-        projectId: project._id,
-        content: `${content} ${verbToBe} added to project: ${project.projectName}`,
-        Types: Enum.NOTIFICATION_TYPES.PROJECT_MEMBER_ADDED, // Hoặc loại thông báo
-      };
-
-      await createNotification(reqNotification);
-
-      return res.status(201).json({
-        success: true,
-        message: "Members added successfully",
-        data: addedMembers,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Failed to add members",
-        error: error.message,
-      });
-    }
-  },
-
-  // Lấy danh sách member của project
-  getProjectMembers: async (req, res) => {
-    try {
-      const project = await ProjectModel.findById(req.params.id);
-      if (!project) {
-        return res.status(404).json({
-          success: false,
-          message: "Project not found",
-        });
-      }
-
-      const members = await ProjectMemberModel.find({
-        projectId: req.params.id,
-      })
-        .populate("userId", "username email")
-        .populate("roleId", "name");
-
-      return res.status(200).json({
-        success: true,
-        data: members,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Failed to get members",
         error: error.message,
       });
     }
@@ -462,16 +430,12 @@ const ProjectController = {
       const username = populatedMember.userId.toJSON().userName;
       const roleName = populatedMember.roleId.toJSON().name;
 
-      console.log(username, roleName);
-
       const reqNotification = {
         authorId: req.user._id,
         projectId: project._id,
         content: `${username} is updated role to ${roleName}: ${project.projectName}`,
         Types: Enum.NOTIFICATION_TYPES.PROJECT_MEMBER_UPDATED, // Hoặc loại thông báo
       };
-
-      console.log(reqNotification);
 
       await createNotification(reqNotification);
 
