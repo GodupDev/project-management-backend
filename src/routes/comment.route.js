@@ -1,10 +1,11 @@
 import express from 'express';
 import { commentController } from '../controllers/comment.controller.js';
+import { protect } from '../middlewares/auth.mdw.js';
 const CommentRoute = express.Router();
 CommentRoute.get('/:taskId', commentController.getAllComments);
 CommentRoute.post('/:taskId', commentController.createComment);
-CommentRoute.post('/:taskId/reply', commentController.replyComment);
-CommentRoute.get('/:id/replies', commentController.getReplies);
+CommentRoute.post('/:commentId/reply', protect, commentController.replyComment);
+CommentRoute.get('/:commentId/reply', commentController.getReplies);
 CommentRoute.patch('/:id', commentController.updateComment);
 CommentRoute.delete('/:id', commentController.deleteComment);
 export default CommentRoute;

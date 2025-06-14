@@ -63,7 +63,7 @@ const ProjectController = {
     const {
       sort = "desc",
       page = 1,
-      limit = 10,
+      limit = 100,
     } = req.query;
 
     const parsedPage = Math.max(parseInt(page), 1);

@@ -69,61 +69,88 @@ export const commentController = {
     // post http://localhost:8000/comments/:taskId/reply
     replyComment: async (req, res, next) => {
         try {
-            const parentCommentId = req.params.id;
-            const { content,authorId} = req.body;
-            const newReply = new commentModel({
-                authorId,
-                content,
-                parentCommentId 
+            const parentCommentId = req.params.commentId; // lấy từ params
+            const { content } = req.body;
+            const authorId = req.user._id;
+
+            if (!parentCommentId) {
+            return res.status(400).json({
+                success: false,
+                message: "parentCommentId is required",
             });
-            await newReply.save();  
-            const populatedReply = await commentModel.findById(newReply._id)
-  .populate('authorId')
-  .populate('parentCommentId');
-  
-            res.status(201).json({
-                success: true,  
-                message: 'Reply created successfully',
-                data: populatedReply    
-            });
-        } catch (err) { 
-            res.status(500).json({
-                success: false, 
-                message: 'Failed to create reply',
-                error: err.message
-            });
-            next(err);  
-        }   
-    },
-    // lấy tất cả reply của một bình luận cụ thể
-    // get http://localhost:8000/comments/:id/replies
-    getReplies: async (req, res, next) => {
-        try {
-            const commentId = req.params.id;
-            const replies = await commentModel
-                .find({ parentCommentId: commentId })
-                .populate('authorId')
-                .populate('parentCommentId');
-            if (replies.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'No replies found for this comment'
-                });
             }
-            res.status(200).json({
-                success: true,
-                message: 'Replies retrieved successfully',
-                data: replies
+
+            const parentComment = await commentModel.findById(parentCommentId);
+            if (!parentComment) {
+            return res.status(404).json({
+                success: false,
+                message: "Parent comment not found",
+            });
+            }
+
+            const taskId = parentComment.taskId;
+
+            const newReply = new commentModel({
+            taskId,
+            authorId,
+            content,
+            parentCommentId,
+            });
+
+            await newReply.save();
+
+            const populatedReply = await commentModel.findById(newReply._id)
+            .populate("authorId")
+            .populate("parentCommentId");
+
+            res.status(201).json({
+            success: true,
+            message: "Reply created successfully",
+            data: populatedReply,
             });
         } catch (err) {
             res.status(500).json({
-                success: false,
-                message: 'Failed to retrieve replies',
-                error: err.message
+            success: false,
+            message: "Failed to create reply",
+            error: err.message,
             });
             next(err);
         }
-    },  
+        },
+
+    // lấy tất cả reply của một bình luận cụ thể
+    // get http://localhost:8000/comments/:commentId/reply
+    getReplies: async (req, res, next) => {
+        try {
+            const commentId = req.params.commentId; // Sửa lại từ .id → .commentId
+
+            const replies = await commentModel
+            .find({ parentCommentId: commentId })
+            .populate("authorId")
+            .populate("parentCommentId");
+
+            if (!replies.length) {
+            return res.status(404).json({
+                success: false,
+                message: "No replies found for this comment",
+            });
+            }
+
+            res.status(200).json({
+            success: true,
+            message: "Replies retrieved successfully",
+            data: replies,
+            });
+        } catch (err) {
+            res.status(500).json({
+            success: false,
+            message: "Failed to retrieve replies",
+            error: err.message,
+            });
+            next(err);
+        }
+        },
+
     // cập nhật một bình luận
     // patch http://localhost:8000/comments/:id
     updateComment: async (req, res, next) => {
