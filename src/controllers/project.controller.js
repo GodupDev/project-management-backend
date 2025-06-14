@@ -42,10 +42,16 @@ const ProjectController = {
         roleId: "684ced387f9d39d5d4d0e8d8", // Staff role
       });
 
+      // Chuyển thành plain object
+      const projectObj = project.toObject();
+
+      // Gắn memberCount thủ công
+      projectObj.memberCount = 1;
+
       return res.status(201).json({
         success: true,
         message: "Project created successfully",
-        data: project,
+        data: projectObj,
       });
     } catch (error) {
       return res.status(500).json({
