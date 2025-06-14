@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Collection from "../../config/collection.config.js";
 import Enum from "../../config/enums.config.js";
 
+
 const notificationSchema = new mongoose.Schema(
   {
     authorId: {
@@ -19,7 +20,7 @@ const notificationSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    Types: {
+    type: {
       type: String,
       enum: Object.values(Enum.NOTIFICATION_TYPES),
       required: true,
@@ -32,9 +33,4 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const NotificationModel = mongoose.model(
-  Collection.supporting.NOTIFICATION,
-  notificationSchema,
-);
-
-export default NotificationModel;
+export default mongoose.model(Collection.supporting.NOTIFICATION, notificationSchema);

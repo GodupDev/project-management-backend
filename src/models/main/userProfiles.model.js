@@ -8,70 +8,68 @@ const userProfileSchema = new mongoose.Schema(
       ref: Collection.main.USERS,
       required: true,
       unique: true,
-      index: true, // tăng tốc truy vấn
+      index: true,
     },
     fullName: {
       type: String,
-      required: [true, "Full name is required"],
+      trim: true,
+    },
+    bio: {
+      type: String,
       trim: true,
     },
     bestPosition: {
       type: String,
       trim: true,
-      default: "",
     },
     location: {
       type: String,
       trim: true,
-      default: "",
     },
     contactNumber: {
       type: String,
       trim: true,
-      validate: {
-        validator: function (v) {
-          // Regex cơ bản, có thể thay theo yêu cầu từng quốc gia
-          return !v || /^[0-9\-\+\s]{9,15}$/.test(v);
-        },
-        message: (props) => `${props.value} is not a valid phone number!`,
-      },
     },
     avatarUrl: {
       type: String,
       trim: true,
-      default:
-        "https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg",
-      validate: {
-        validator: function (v) {
-          // Kiểm tra URL bắt đầu bằng http hoặc https
-          return /^https?:\/\/.+/.test(v);
-        },
-        message: (props) => `${props.value} is not a valid URL!`,
+    },
+    socialLinks: {
+      linkedin: String,
+      twitter: String,
+      github: String,
+      website: String,
+    },
+    // Thêm cấu trúc cài đặt thông báo
+    notificationSettings: {
+      emailNotifications: {
+        taskUpdates: { type: Boolean, default: true },
+        projectUpdates: { type: Boolean, default: true },
+        mentions: { type: Boolean, default: true },
+        dailyDigest: { type: Boolean, default: false },
+        weeklyReport: { type: Boolean, default: true },
+      },
+      pushNotifications: {
+        taskUpdates: { type: Boolean, default: true },
+        projectUpdates: { type: Boolean, default: false },
+        mentions: { type: Boolean, default: true },
+        comments: { type: Boolean, default: true },
+      },
+      inAppNotifications: {
+        taskUpdates: { type: Boolean, default: true },
+        projectUpdates: { type: Boolean, default: true },
+        mentions: { type: Boolean, default: true },
+        comments: { type: Boolean, default: true },
+        systemUpdates: { type: Boolean, default: true },
       },
     },
-    bio: {
-      type: String,
-      maxLength: [300, "About cannot be more than 300 characters"],
-      default: "",
-      trim: true,
-    },
-    // Mạng xã hội (có thể là object chứa link Facebook, LinkedIn...)
-    socialLinks: {
-      facebook: { type: String, trim: true, default: "" },
-      linkedin: { type: String, trim: true, default: "" },
-      github: { type: String, trim: true, default: "" },
-      // thêm các mạng xã hội khác nếu muốn
-    },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true }
 );
 
-// Tạo model từ schema
-const UserProfileModel = mongoose.model(
+const UserProfile = mongoose.model(
   Collection.main.USERS_PROFILE,
-  userProfileSchema,
+  userProfileSchema
 );
 
-export default UserProfileModel;
+export default UserProfile;

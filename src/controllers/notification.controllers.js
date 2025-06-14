@@ -1,7 +1,7 @@
 import createNotification from "../services/notification.service.js";
-
 import ProjectMemberModel from "../models/main/projectMember.model.js";
 import NotificationModel from "../models/supporting/notification.model.js";
+import * as Enum from "../config/enums.config.js";
 
 const NotificationController = {
   addNotification: async (req, res) => {
@@ -25,9 +25,15 @@ const NotificationController = {
     try {
       const userId = req.user._id;
 
-      // Lấy giá trị isRead từ query params, ví dụ: ?isRead=true
-      // Nếu không truyền sẽ không lọc theo isRead
-      const { isRead, containAuthor } = req.query;
+      // Lấy các tham số lọc
+      const {
+        isRead,
+        containAuthor,
+        taskUpdates = "true",
+        projectUpdates = "true",
+        mentions = "true",
+        comments = "true",
+      } = req.query;
 
       // Lấy danh sách projectId mà user tham gia
       const projectMembers = await ProjectMemberModel.find({ userId }).select(
@@ -37,21 +43,36 @@ const NotificationController = {
       const projectIds = projectMembers.map((pm) => pm.projectId);
 
       const authorId = containAuthor ? req.user._id : null;
+
       // Build filter object
       const filter = {
         projectId: { $in: projectIds },
         authorId: { $ne: authorId },
       };
 
-      // Nếu có isRead trong query, chuyển sang Boolean và thêm vào filter
+      // Lọc theo trạng thái đã đọc
       if (typeof isRead !== "undefined") {
-        filter.isRead = isRead === "true"; // query params luôn là string
+        filter.isRead = isRead === "true";
+      }
+
+      // Lọc theo loại thông báo
+      const selectedTypes = [];
+      if (taskUpdates === "true")
+        selectedTypes.push(Enum.NOTIFICATION_TYPES.TASK_UPDATE);
+      if (projectUpdates === "true")
+        selectedTypes.push(Enum.NOTIFICATION_TYPES.PROJECT_UPDATE);
+      if (mentions === "true") selectedTypes.push(Enum.NOTIFICATION_TYPES.MENTION);
+      if (comments === "true") selectedTypes.push(Enum.NOTIFICATION_TYPES.COMMENT);
+
+      if (selectedTypes.length > 0) {
+        filter.Types = { $in: selectedTypes };
       }
 
       // Tìm thông báo với filter
-      const notifications = await NotificationModel.find(filter).sort({
-        createdAt: -1,
-      });
+      const notifications = await NotificationModel.find(filter)
+        .sort({ createdAt: -1 })
+        .populate("authorId", "username email fullName profileImage")
+        .populate("projectId", "name");
 
       return res.status(200).json({
         success: true,
