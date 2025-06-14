@@ -69,16 +69,9 @@ export const commentController = {
     // post http://localhost:8000/comments/:taskId/reply
     replyComment: async (req, res, next) => {
         try {
-            const taskId = req.params.taskId;
-            if (!taskId) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Task ID is required'
-                }); 
-            }
-            const { content,authorId, parentCommentId } = req.body;
+            const parentCommentId = req.params.id;
+            const { content,authorId} = req.body;
             const newReply = new commentModel({
-                taskId,     
                 authorId,
                 content,
                 parentCommentId 

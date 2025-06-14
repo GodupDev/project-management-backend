@@ -204,7 +204,7 @@ const ProjectController = {
 
   getProjectMembers: async (req, res) => {
     const { projectId } = req.params;
-
+    console.log("Fetching members for project:", projectId);
   try {
     const members = await ProjectMemberModel.find({ projectId })
       .populate({

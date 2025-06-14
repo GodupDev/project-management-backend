@@ -10,7 +10,7 @@ const taskCommentSchema = mongoose.Schema(
     authorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: Collection.main.USERS,
-      required: true,
+      
     },
     content: {
       type: String,
