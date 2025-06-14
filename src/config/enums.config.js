@@ -76,6 +76,12 @@ const NOTIFICATION_TYPES = Object.freeze({
   PROJECT_MEMBER_ADDED: "project_member_added",
   PROJECT_MEMBER_REMOVED: "project_member_removed",
   PROJECT_MEMBER_UPDATED: "project_member_updated",
+
+  TASK_UPDATE: "TASK_UPDATE",
+  PROJECT_UPDATE: "PROJECT_UPDATE", 
+  MENTION: "MENTION",
+  COMMENT: "COMMENT",
+  SYSTEM_UPDATE: "SYSTEM_UPDATE"
 });
 
 const Enum = {
