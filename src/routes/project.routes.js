@@ -15,12 +15,6 @@ router.put("/:id", protect, ProjectController.updateProject);
 
 router.delete("/:id", protect, ProjectController.deleteProject);
 
-router.put(
-  "/:id/members/:memberId",
-  protect,
-  ProjectController.updateProjectMember,
-);
-
 router.delete(
   "/:id/members/:memberId",
   protect,
