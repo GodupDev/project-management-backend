@@ -15,6 +15,8 @@ router.put("/:id", protect, ProjectController.updateProject);
 
 router.delete("/:id", protect, ProjectController.deleteProject);
 
+router.get("/:projectId/members", ProjectController.getProjectMembers);
+
 router.delete(
   "/:id/members/:memberId",
   protect,

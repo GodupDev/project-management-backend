@@ -5,13 +5,17 @@ import mainRoutes from "./routes/index.routes.js";
 const app = express();
 
 // Middleware
+// In your main server file (usually app.js or index.js)
+// Enable CORS with specific options
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: "*", // or '*' to allow all origins
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }),
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

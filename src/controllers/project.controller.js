@@ -65,6 +65,7 @@ const ProjectController = {
   // Lấy tất cả project
   // + Từ tất cả project mà user đang làm việc
   // + Thêm các filler (status, Data range), sort
+  // Lấy tất cả project mà user hiện tại là thành viên
   getAllProjects: async (req, res) => {
     try {
       const userId = req.user._id;
@@ -82,7 +83,7 @@ const ProjectController = {
       const parsedLimit = Math.max(parseInt(limit), 1);
       const sortOrder = sort === "asc" ? 1 : -1;
 
-      // Validate dates
+      // Validate date range
       if (from && to) {
         const fromDate = new Date(from);
         const toDate = new Date(to);
@@ -100,13 +101,13 @@ const ProjectController = {
         }
       }
 
-      // Get projects the user is a member of
+      // Lấy danh sách projectId từ các project mà user là thành viên
       const memberships = await ProjectMemberModel.find({ userId }).select(
         "projectId",
       );
       const memberProjectIds = memberships.map((m) => m.projectId);
 
-      // Build query
+      // Tạo query lọc
       const query = { _id: { $in: memberProjectIds } };
       if (status) query.status = status;
       if (from || to) {
@@ -119,7 +120,7 @@ const ProjectController = {
         query.$or = [{ projectName: regex }, { description: regex }];
       }
 
-      // Get paginated projects and total count
+      // Lấy project theo phân trang + tổng số project
       const [projects, total] = await Promise.all([
         ProjectModel.find(query)
           .sort({ createdAt: sortOrder })
@@ -130,26 +131,31 @@ const ProjectController = {
 
       const projectIds = projects.map((project) => project._id);
 
-      // Count members per project
-      const membersGrouped = await ProjectMemberModel.aggregate([
-        { $match: { projectId: { $in: projectIds } } },
-        {
-          $group: {
-            _id: "$projectId",
-            count: { $sum: 1 },
-          },
-        },
-      ]);
+      // Lấy thông tin thành viên từng project và populate userId (lấy name)
+      const allMembers = await ProjectMemberModel.find({
+        projectId: { $in: projectIds },
+      }).populate("userId", "_id username"); // Chỉ lấy id và name
 
-      const memberCountMap = {};
-      membersGrouped.forEach((item) => {
-        memberCountMap[item._id.toString()] = item.count;
+      // Gom nhóm member theo từng project
+      const membersGroupedMap = {};
+      allMembers.forEach(({ projectId, userId }) => {
+        const pid = projectId.toString();
+        if (!membersGroupedMap[pid]) membersGroupedMap[pid] = [];
+        membersGroupedMap[pid].push({
+          _id: userId._id,
+          name: userId.username,
+        });
       });
 
-      const result = projects.map((project) => ({
-        ...project.toObject(),
-        memberCount: memberCountMap[project._id.toString()] || 0,
-      }));
+      // Gắn thông tin member vào từng project
+      const result = projects.map((project) => {
+        const pid = project._id.toString();
+        return {
+          ...project.toObject(),
+          memberCount: membersGroupedMap[pid]?.length || 0,
+          members: membersGroupedMap[pid] || [],
+        };
+      });
 
       return res.status(200).json({
         success: true,
@@ -346,6 +352,33 @@ const ProjectController = {
         success: false,
         message: "Failed to delete project",
         error: error.message,
+      });
+    }
+  },
+
+  getProjectMembers: async (req, res) => {
+    const { projectId } = req.params;
+    console.log("Fetching members for project:", projectId);
+    try {
+      const members = await ProjectMemberModel.find({ projectId })
+        .populate({
+          path: "userId",
+          select: "username email userProfileId", // chỉ lấy cần thiết
+        })
+        .populate({
+          path: "roleId",
+          select: "name", // nếu muốn lấy tên role
+        });
+
+      res.status(200).json({
+        success: true,
+        data: members,
+      });
+    } catch (err) {
+      console.error("Error fetching project members:", err);
+      res.status(500).json({
+        success: false,
+        message: "Lỗi khi lấy danh sách thành viên dự án",
       });
     }
   },

@@ -48,8 +48,8 @@ const taskAttachmentSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-const taskAttachmentModel = mongoose.Model(
-  Collection.main.TASK_ATTATCHMENT,
+const taskAttachmentModel = mongoose.model(
+  Collection.main.TASK_ATTACHMENT,
   taskAttachmentSchema,
 );
 export default taskAttachmentModel;
