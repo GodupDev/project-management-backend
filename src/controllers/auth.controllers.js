@@ -247,8 +247,8 @@ const AuthController = {
         success: true,
         message: "Tìm người dùng thành công",
         data: {
-          _id: user._id,
-          fullName: userProfile.fullName,
+          userId: user._id,
+          username: user.username,
           avatarUrl: userProfile.avatarUrl,
         },
       });

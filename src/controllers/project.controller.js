@@ -1,9 +1,7 @@
 import Enum from "../config/enums.config.js";
-import Collection from "../config/collection.config.js";
 
 import ProjectModel from "../models/main/project.model.js";
 import ProjectMemberModel from "../models/main/projectMember.model.js";
-import UserModel from "../models/main/users.model.js";
 
 import createNotification from "../services/notification.service.js";
 
@@ -41,13 +39,19 @@ const ProjectController = {
       await ProjectMemberModel.create({
         projectId: project._id,
         userId,
-        roleId: "684af97fba312846eace5d55", // Staff role
+        roleId: "684ced387f9d39d5d4d0e8d8", // Staff role
       });
+
+      // Chuyển thành plain object
+      const projectObj = project.toObject();
+
+      // Gắn memberCount thủ công
+      projectObj.memberCount = 1;
 
       return res.status(201).json({
         success: true,
         message: "Project created successfully",
-        data: project,
+        data: projectObj,
       });
     } catch (error) {
       return res.status(500).json({
@@ -61,6 +65,7 @@ const ProjectController = {
   // Lấy tất cả project
   // + Từ tất cả project mà user đang làm việc
   // + Thêm các filler (status, Data range), sort
+  // Lấy tất cả project mà user hiện tại là thành viên
   getAllProjects: async (req, res) => {
     try {
       const userId = req.user._id;
@@ -78,7 +83,7 @@ const ProjectController = {
       const parsedLimit = Math.max(parseInt(limit), 1);
       const sortOrder = sort === "asc" ? 1 : -1;
 
-      // Validate dates
+      // Validate date range
       if (from && to) {
         const fromDate = new Date(from);
         const toDate = new Date(to);
@@ -96,13 +101,13 @@ const ProjectController = {
         }
       }
 
-      // Get projects the user is a member of
+      // Lấy danh sách projectId từ các project mà user là thành viên
       const memberships = await ProjectMemberModel.find({ userId }).select(
         "projectId",
       );
       const memberProjectIds = memberships.map((m) => m.projectId);
 
-      // Build query
+      // Tạo query lọc
       const query = { _id: { $in: memberProjectIds } };
       if (status) query.status = status;
       if (from || to) {
@@ -115,7 +120,7 @@ const ProjectController = {
         query.$or = [{ projectName: regex }, { description: regex }];
       }
 
-      // Get paginated projects and total count
+      // Lấy project theo phân trang + tổng số project
       const [projects, total] = await Promise.all([
         ProjectModel.find(query)
           .sort({ createdAt: sortOrder })
@@ -126,26 +131,31 @@ const ProjectController = {
 
       const projectIds = projects.map((project) => project._id);
 
-      // Count members per project
-      const membersGrouped = await ProjectMemberModel.aggregate([
-        { $match: { projectId: { $in: projectIds } } },
-        {
-          $group: {
-            _id: "$projectId",
-            count: { $sum: 1 },
-          },
-        },
-      ]);
+      // Lấy thông tin thành viên từng project và populate userId (lấy name)
+      const allMembers = await ProjectMemberModel.find({
+        projectId: { $in: projectIds },
+      }).populate("userId", "_id username"); // Chỉ lấy id và name
 
-      const memberCountMap = {};
-      membersGrouped.forEach((item) => {
-        memberCountMap[item._id.toString()] = item.count;
+      // Gom nhóm member theo từng project
+      const membersGroupedMap = {};
+      allMembers.forEach(({ projectId, userId }) => {
+        const pid = projectId.toString();
+        if (!membersGroupedMap[pid]) membersGroupedMap[pid] = [];
+        membersGroupedMap[pid].push({
+          _id: userId._id,
+          name: userId.username,
+        });
       });
 
-      const result = projects.map((project) => ({
-        ...project.toObject(),
-        memberCount: memberCountMap[project._id.toString()] || 0,
-      }));
+      // Gắn thông tin member vào từng project
+      const result = projects.map((project) => {
+        const pid = project._id.toString();
+        return {
+          ...project.toObject(),
+          memberCount: membersGroupedMap[pid]?.length || 0,
+          members: membersGroupedMap[pid] || [],
+        };
+      });
 
       return res.status(200).json({
         success: true,
@@ -238,7 +248,6 @@ const ProjectController = {
   updateProject: async (req, res) => {
     try {
       const project = await ProjectModel.findById(req.params.id);
-
       if (!project) {
         return res.status(404).json({
           success: false,
@@ -246,37 +255,56 @@ const ProjectController = {
         });
       }
 
+      // 1. Kiểm tra phải có ít nhất 1 leader
+      const hasLeader = req.body.members.some((m) => m.role === "leader");
+      if (!hasLeader) {
+        return res.status(400).json({
+          success: false,
+          message: "Project must have at least one leader.",
+        });
+      }
+
+      // 2. Lấy danh sách thành viên hiện tại
+      const currentMembers = await ProjectMemberModel.find({
+        projectId: project._id,
+      });
+      const currentMemberMap = {};
+      currentMembers.forEach((m) => {
+        currentMemberMap[m.userId.toString()] = m;
+      });
+
+      // 3. Duyệt qua từng member trong body
+      for (const memberObj of req.body.members) {
+        const userId = memberObj.userId;
+        const role = memberObj.role || "staff";
+        const existMember = currentMemberMap[userId];
+
+        if (existMember) {
+          // Nếu đã có, cập nhật role nếu khác
+          if (existMember.role !== role) {
+            existMember.role = role;
+            await existMember.save();
+          }
+        } else {
+          // Nếu chưa có, thêm mới
+          await ProjectMemberModel.create({
+            projectId: project._id,
+            userId,
+            role,
+          });
+        }
+      }
+
+      // 4. Cập nhật thông tin project
       const updatedProject = await ProjectModel.findByIdAndUpdateProject(
         req.params.id,
         req.body,
       );
 
-      var log = "";
-
-      for (const userId of req.body.memberIds) {
-        const member = await UserModel.findById(userId);
-
-        if (member) {
-          await ProjectMemberModel.create({
-            projectId: project._id,
-            userId,
-          });
-        } else {
-          log += `User with ID ${userId} not found. `;
-        }
-      }
-
-      const reqNotification = {
-        authorId: req.user._id,
-        projectId: project._id,
-        content: `updated project: ${project.projectName}`,
-        Types: Enum.NOTIFICATION_TYPES.PROJECT_UPDATED, // Hoặc loại thông báo
-      };
-
-      await createNotification(reqNotification);
+      // Gửi thông báo (nếu cần)
+      // ...
 
       return res.status(200).json({
-        log,
         success: true,
         message: "Project updated successfully",
         data: updatedProject,
@@ -328,6 +356,33 @@ const ProjectController = {
     }
   },
 
+  getProjectMembers: async (req, res) => {
+    const { projectId } = req.params;
+    console.log("Fetching members for project:", projectId);
+    try {
+      const members = await ProjectMemberModel.find({ projectId })
+        .populate({
+          path: "userId",
+          select: "username email userProfileId", // chỉ lấy cần thiết
+        })
+        .populate({
+          path: "roleId",
+          select: "name", // nếu muốn lấy tên role
+        });
+
+      res.status(200).json({
+        success: true,
+        data: members,
+      });
+    } catch (err) {
+      console.error("Error fetching project members:", err);
+      res.status(500).json({
+        success: false,
+        message: "Lỗi khi lấy danh sách thành viên dự án",
+      });
+    }
+  },
+
   // Xóa member khỏi project (chỉ creator hoặc leader mới được xóa)
   removeProjectMember: async (req, res) => {
     try {
@@ -351,12 +406,26 @@ const ProjectController = {
         });
       }
 
+      // Đếm số leader hiện tại
+      const allMembers = await ProjectMemberModel.find({
+        projectId: req.params.id,
+      });
+      const leaderCount = allMembers.filter((m) => m.role === "leader").length;
+
+      // Nếu member này là leader và là leader cuối cùng thì không cho xóa
+      if (member.role === "leader" && leaderCount <= 1) {
+        return res.status(400).json({
+          success: false,
+          message: "Project must have at least one leader.",
+        });
+      }
+
       const populatedMember = await member.populate({
         path: "userId",
-        select: "userName", // hoặc "username" tùy theo schema
+        select: "username",
       });
 
-      const username = populatedMember.userId.toJSON().userName;
+      const username = populatedMember.userId.username;
 
       await member.deleteOne();
 
@@ -364,7 +433,7 @@ const ProjectController = {
         authorId: req.user._id,
         projectId: project._id,
         content: `${username} is deleted from project: ${project.projectName}`,
-        Types: Enum.NOTIFICATION_TYPES.PROJECT_MEMBER_REMOVED, // Hoặc loại thông báo
+        Types: Enum.NOTIFICATION_TYPES.PROJECT_MEMBER_REMOVED,
       };
 
       await createNotification(reqNotification);
@@ -377,77 +446,6 @@ const ProjectController = {
       return res.status(500).json({
         success: false,
         message: "Failed to remove member",
-        error: error.message,
-      });
-    }
-  },
-
-  updateProjectMember: async (req, res) => {
-    try {
-      const projectId = req.params.id;
-      const memberId = req.params.memberId; // userId của member
-      const { roleId } = req.body; // ví dụ muốn cập nhật roleId
-
-      // Kiểm tra project tồn tại
-      const project = await ProjectModel.findById(projectId);
-      if (!project) {
-        return res.status(404).json({
-          success: false,
-          message: "Project not found",
-        });
-      }
-
-      // Tìm member trong project
-      const member = await ProjectMemberModel.findOne({
-        projectId,
-        userId: memberId,
-      });
-
-      if (!member) {
-        return res.status(404).json({
-          success: false,
-          message: "Member not found",
-        });
-      }
-
-      if (roleId) {
-        member.roleId = roleId;
-      }
-
-      await member.save();
-
-      const populatedMember = await member.populate([
-        {
-          path: "userId",
-          select: "userName", // hoặc "username" tùy theo schema
-        },
-        {
-          path: "roleId",
-          select: "name",
-        },
-      ]);
-
-      const username = populatedMember.userId.toJSON().userName;
-      const roleName = populatedMember.roleId.toJSON().name;
-
-      const reqNotification = {
-        authorId: req.user._id,
-        projectId: project._id,
-        content: `${username} is updated role to ${roleName}: ${project.projectName}`,
-        Types: Enum.NOTIFICATION_TYPES.PROJECT_MEMBER_UPDATED, // Hoặc loại thông báo
-      };
-
-      await createNotification(reqNotification);
-
-      return res.status(200).json({
-        success: true,
-        message: "Member updated successfully",
-        data: member,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Failed to update member",
         error: error.message,
       });
     }

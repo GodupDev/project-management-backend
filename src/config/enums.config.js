@@ -1,10 +1,16 @@
 // config/enums.js
 const PROJECT_STATUS = Object.freeze({
-  PENDING: "pending",
+  ON_HOLD: "on_hold",
   ACTIVE: "active",
   COMPLETED: "completed",
   CANCELLED: "cancelled",
 });
+
+const TASK_PRIORITY = {
+  LOW: "low",
+  MEDIUM: "medium",
+  HIGH: "high",
+};
 
 const TASK_STATUS = Object.freeze({
   TODO: "todo",
@@ -87,6 +93,7 @@ const NOTIFICATION_TYPES = Object.freeze({
 const Enum = {
   PROJECT_STATUS,
   TASK_STATUS,
+  TASK_PRIORITY,
   ROLE_NAME,
   PERMISSION_CODE,
   NOTIFICATION_TYPES,

@@ -21,7 +21,7 @@ const projectMemberSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: Collection.auth.ROLE,
       index: true,
-      default: "684afa27ba312846eace5d57", //Staff
+      default: "684cee797f9d39d5d4d0e8de", //Staff
     },
   },
   {
